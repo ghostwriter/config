@@ -1,16 +1,12 @@
-# wip
+# Config
 
-[![Compliance](https://github.com/ghostwriter/wip/actions/workflows/compliance.yml/badge.svg)](https://github.com/ghostwriter/wip/actions/workflows/compliance.yml)
-[![Supported PHP Version](https://badgen.net/packagist/php/ghostwriter/wip?color=8892bf)](https://www.php.net/supported-versions)
-[![Type Coverage](https://shepherd.dev/github/ghostwriter/wip/coverage.svg)](https://shepherd.dev/github/ghostwriter/wip)
-[![Latest Version on Packagist](https://badgen.net/packagist/v/ghostwriter/wip)](https://packagist.org/packages/ghostwriter/wip)
-[![Downloads](https://badgen.net/packagist/dt/ghostwriter/wip?color=blue)](https://packagist.org/packages/ghostwriter/wip)
+[![Compliance](https://github.com/ghostwriter/config/actions/workflows/compliance.yml/badge.svg)](https://github.com/ghostwriter/config/actions/workflows/compliance.yml)
+[![Supported PHP Version](https://badgen.net/packagist/php/ghostwriter/config?color=8892bf)](https://www.php.net/supported-versions)
+[![Type Coverage](https://shepherd.dev/github/ghostwriter/config/coverage.svg)](https://shepherd.dev/github/ghostwriter/config)
+[![Latest Version on Packagist](https://badgen.net/packagist/v/ghostwriter/config)](https://packagist.org/packages/ghostwriter/config)
+[![Downloads](https://badgen.net/packagist/dt/ghostwriter/config?color=blue)](https://packagist.org/packages/ghostwriter/config)
 
-work in progress
-
-> **Warning**
->
-> This project is not finished yet, work in progress.
+Provides an object that maps configuration keys to values.
 
 
 ## Installation
@@ -18,13 +14,41 @@ work in progress
 You can install the package via composer:
 
 ``` bash
-composer require ghostwriter/wip
+composer require ghostwriter/config
 ```
 
 ## Usage
 
 ```php
-// work in progress
+// API
+interface ConfigInterface extends ArrayAccess, Countable, IteratorAggregate
+{
+    public function toArray(): array;
+
+    public function get(string $key, mixed $default = null): mixed;
+
+    public function has(string $key): bool;
+
+    public function merge(array $options): void;
+
+    public function mergeFromPath(string $path, string $key): void;
+
+    public function set(string $key, mixed $value): void;
+
+    public function push(string $key, mixed $value): void;
+
+    public function remove(string $key): void;
+
+    public function count(): int;
+
+    public function getIterator(): Traversable;
+
+    public function append(string $key, mixed $value): void;
+
+    public function prepend(string $key, mixed $value): void;
+
+    public function split(string $key): self;
+}
 ```
 
 ## Testing
@@ -48,7 +72,7 @@ If you discover any security related issues, please email `nathanael.esayeas@pro
 ## Credits
 
 - [Nathanael Esayeas](https://github.com/ghostwriter)
-- [All Contributors](https://github.com/ghostwriter/wip/contributors)
+- [All Contributors](https://github.com/ghostwriter/config/contributors)
 
 ## License
 
