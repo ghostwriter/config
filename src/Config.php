@@ -6,13 +6,11 @@ namespace Ghostwriter\Config;
 
 use Ghostwriter\Config\Contract\ConfigInterface;
 
-use RuntimeException;
 use Traversable;
 use function array_merge;
 use function array_shift;
 use function count;
 use function explode;
-use function is_array;
 use function str_contains;
 
 final class Config implements ConfigInterface
@@ -27,24 +25,16 @@ final class Config implements ConfigInterface
 
     public function append(string $key, mixed $value): void
     {
-        $config = $this->get($key, []);
-
-        if (! is_array($config)) {
-            throw new RuntimeException();
-        }
-
-        $this->set($key, [...$config, ...(array) $value]);
+        /** @var ?array $current */
+        $current = $this->get($key, []);
+        $this->set($key, [...(array) $current, ...(array) $value]);
     }
 
     public function prepend(string $key, mixed $value): void
     {
-        $config = $this->get($key, []);
-
-        if (! is_array($config)) {
-            throw new RuntimeException();
-        }
-
-        $this->set($key, [...(array) $value, ...$config]);
+        /** @var ?array $current */
+        $current = $this->get($key, []);
+        $this->set($key, [...(array) $value, ...(array) $current]);
     }
 
     public function toArray(): array
@@ -186,15 +176,5 @@ final class Config implements ConfigInterface
     {
         //        $this->remove($offset);
         $this->set($offset, null);
-    }
-
-    public function push(string $key, mixed $value): void
-    {
-        /** @var array $current */
-        $current = $this->get($key, []);
-
-        $current[] = $value;
-
-        $this->set($key, $current);
     }
 }
