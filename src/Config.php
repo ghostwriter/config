@@ -109,15 +109,11 @@ final class Config implements ConfigInterface
 
         $options = &$this->options;
         $indexes = explode('.', $key);
-        $size = count($indexes);
-        while ($size > 1) {
-            --$size;
-            $index = array_shift($indexes);
-            $options[$index] ??= [];
+        while ($index = array_shift($indexes)) {
             $options = &$options[$index];
         }
-
-        $options[array_shift($indexes)] = $value;
+        /** @var ?mixed $options */
+        $options = $value;
     }
 
     public function remove(string $key): void
