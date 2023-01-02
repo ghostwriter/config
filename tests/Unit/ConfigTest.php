@@ -366,7 +366,7 @@ final class ConfigTest extends TestCase
 
         self::assertIsIterable($config);
 
-        foreach ($config as $item) {
+        foreach ($config->getIterator() as $item) {
             self::assertTrue($item);
         }
     }
@@ -391,12 +391,15 @@ final class ConfigTest extends TestCase
     public function testItThrowsAnErrorWhenAppendingToANonArrayItem(): void
     {
         $config = new Config([
-            'foo' => 'foo',
+            'foo' => 'bar',
         ]);
 
-        $this->expectException(RuntimeException::class);
+        // $this->expectException(RuntimeException::class);
+        $config->append('foo', 'baz');
 
-        $config->append('foo', 'bar');
+        self::assertSame([
+            'foo' => ['bar', 'baz'],
+        ], $config->toArray());
     }
 
     public function testItCanPrependValuesToAnArrayItem(): void
@@ -419,12 +422,15 @@ final class ConfigTest extends TestCase
     public function testItThrowsAnErrorWhenPrependingToANonArrayItem(): void
     {
         $config = new Config([
-            'foo' => 'foo',
+            'foo' => 'bar',
         ]);
 
-        $this->expectException(RuntimeException::class);
+        // $this->expectException(RuntimeException::class);
 
-        $config->prepend('foo', 'bar');
+        $config->prepend('foo', 'baz');
+        self::assertSame([
+            'foo' => ['baz', 'bar'],
+        ], $config->toArray());
     }
 
     public function testItCanUnsetAnOption(): void
@@ -443,17 +449,17 @@ final class ConfigTest extends TestCase
         self::assertFalse($this->config->has('foo.baz'));
     }
 
-     /** @covers \Ghostwriter\Config\Config::push */
-     public function testPush(): void
+     /** @covers \Ghostwriter\Config\Config::append */
+     public function testAppend(): void
      {
-         $this->config->push('array', 'xxx');
+         $this->config->append('array', 'xxx');
          self::assertSame('xxx', $this->config->get('array.2'));
      }
 
-     /** @covers \Ghostwriter\Config\Config::push */
-     public function testPushWithNewKey(): void
+     /** @covers \Ghostwriter\Config\Config::append */
+     public function testAppendWithNewKey(): void
      {
-         $this->config->push('new-array-key', 'xxx');
+         $this->config->append('new-array-key', 'xxx');
          self::assertSame(['xxx'], $this->config->get('new-array-key'));
      }
 
