@@ -10,7 +10,6 @@ use Rector\Config\RectorConfig;
 use Rector\Core\ValueObject\PhpVersion;
 use Rector\Php55\Rector\String_\StringClassNameToClassConstantRector;
 use Rector\Php74\Rector\Property\RestoreDefaultNullToNullableTypePropertyRector;
-use Rector\Php74\Rector\Property\TypedPropertyRector;
 use Rector\PHPUnit\Rector\Class_\AddSeeTestAnnotationRector;
 use Rector\PHPUnit\Rector\Class_\ConstructClassMethodToSetUpTestCaseRector;
 use Rector\PHPUnit\Rector\Class_\RemoveDataProviderTestPrefixRector;
@@ -61,7 +60,7 @@ return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->parallel();
     $rectorConfig->sets([
         PHPUnitLevelSetList::UP_TO_PHPUNIT_100,
-        //        DowngradeLevelSetList::DOWN_TO_PHP_80,
+        DowngradeLevelSetList::DOWN_TO_PHP_81,
         DowngradeSetList::PHP_81,
         LevelSetList::UP_TO_PHP_81,
         SetList::CODE_QUALITY,
@@ -71,17 +70,10 @@ return static function (RectorConfig $rectorConfig): void {
         SetList::PRIVATIZATION,
         SetList::PSR_4,
         SetList::TYPE_DECLARATION,
-        SetList::TYPE_DECLARATION_STRICT,
         SetList::EARLY_RETURN,
         SetList::PHP_81,
     ]);
-    $rectorConfig->paths([
-        __DIR__ . '/bin',
-        __DIR__ . '/ecs.php',
-        __DIR__ . '/rector.php',
-        __DIR__ . '/src',
-        __DIR__ . '/tests',
-    ]);
+    $rectorConfig->paths([__DIR__ . '/ecs.php', __DIR__ . '/rector.php', __DIR__ . '/src', __DIR__ . '/tests']);
     $rectorConfig->phpVersion(PhpVersion::PHP_80);
     $rectorConfig->skip([
         __DIR__ . '*/tests/Fixture/*',
@@ -106,7 +98,6 @@ return static function (RectorConfig $rectorConfig): void {
         ]
     );
     // register single rule
-    $rectorConfig->rule(TypedPropertyRector::class);
     $rectorConfig->rule(RestoreDefaultNullToNullableTypePropertyRector::class);
     $rectorConfig->rule(AddSeeTestAnnotationRector::class);
     $rectorConfig->rule(AssertCompareToSpecificMethodRector::class);
