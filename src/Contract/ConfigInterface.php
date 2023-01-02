@@ -29,8 +29,6 @@ interface ConfigInterface extends ArrayAccess, Countable, IteratorAggregate
 
     public function set(string $key, mixed $value): void;
 
-    public function push(string $key, mixed $value): void;
-
     public function remove(string $key): void;
 
     public function count(): int;
