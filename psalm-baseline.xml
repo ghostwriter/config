@@ -1,2 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.30.0@d0bc6e25d89f649e4f36a534f330f8bb4643dd69"/>
+<files psalm-version="5.4.0@62db5d4f6a7ae0a20f7cc5a4952d730272fc0863">
+  <file src="src/Config.php">
+    <MixedArgument occurrences="6">
+      <code>$offset</code>
+      <code>$offset</code>
+      <code>$offset</code>
+      <code>$offset</code>
+      <code>$this-&gt;get($key, [])</code>
+      <code>require $path</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="3">
+      <code>$options[$index]</code>
+      <code>$options[$index]</code>
+      <code>$options[array_shift($indexes)]</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="3">
+      <code>$options[$index]</code>
+      <code>$options[$index]</code>
+      <code>$options[array_shift($indexes)]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="3">
+      <code>$options[$index]</code>
+      <code>$options[$index]</code>
+      <code>$options[array_shift($indexes)]</code>
+    </MixedAssignment>
+    <PossiblyNullArgument occurrences="1">
+      <code>$offset</code>
+    </PossiblyNullArgument>
+    <UnresolvableInclude occurrences="1">
+      <code>require $path</code>
+    </UnresolvableInclude>
+  </file>
+  <file src="src/Contract/ConfigInterface.php">
+    <MissingTemplateParam occurrences="2">
+      <code>ArrayAccess</code>
+      <code>IteratorAggregate</code>
+    </MissingTemplateParam>
+  </file>
+  <file src="tests/Unit/ConfigTest.php">
+    <DocblockTypeContradiction occurrences="3">
+      <code>assertSame</code>
+      <code>assertSame</code>
+      <code>assertSame</code>
+    </DocblockTypeContradiction>
+    <MixedInferredReturnType occurrences="1">
+      <code>Generator</code>
+    </MixedInferredReturnType>
+    <RedundantCondition occurrences="1">
+      <code>assertIsIterable</code>
+    </RedundantCondition>
+  </file>
+</files>
