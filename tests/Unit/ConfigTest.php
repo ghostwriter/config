@@ -471,8 +471,8 @@ final class ConfigTest extends TestCase
 
      public function testOffsetExists(): void
      {
-         self::assertTrue(isset($this->config['foo']));
-         self::assertFalse(isset($this->config['not-exist']));
+         self::assertArrayHasKey('foo', $this->config);
+         self::assertArrayNotHasKey('not-exist', $this->config);
      }
 
      public function testOffsetGet(): void
