@@ -77,7 +77,6 @@ return static function (ECSConfig $ecsConfig): void {
     $ecsConfig->cacheDirectory(__DIR__ . '/.cache/ecs');
     $ecsConfig->parallel();
     $ecsConfig->paths([
-        __DIR__ . '/bin',
         __DIR__ . '/ecs.php',
         __DIR__ . '/README.md',
         __DIR__ . '/rector.php',
