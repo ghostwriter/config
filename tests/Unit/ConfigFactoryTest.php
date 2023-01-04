@@ -82,7 +82,7 @@ final class ConfigFactoryTest extends TestCase
      * @covers \Ghostwriter\Config\Config::offsetExists
      * @covers \Ghostwriter\Config\Config::wrap
      * @covers \Ghostwriter\Config\Config::toArray
-     * @covers \Ghostwriter\Config\ConfigFactory::requirePath
+     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
      *
      * @dataProvider validPaths
      *
@@ -92,7 +92,7 @@ final class ConfigFactoryTest extends TestCase
     {
         $configFactory = new ConfigFactory();
 
-        $config = $configFactory->requirePath($path, $key);
+        $config = $configFactory->createFromPath($path, $key);
 
         self::assertArrayHasKey($key, $config);
 
@@ -115,7 +115,7 @@ final class ConfigFactoryTest extends TestCase
      * @covers \Ghostwriter\Config\Config::wrap
      * @covers \Ghostwriter\Config\Config::toArray
      * @covers \Ghostwriter\Config\ConfigFactory::raiseInvalidPathException
-     * @covers \Ghostwriter\Config\ConfigFactory::requirePath
+     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
      *
      * @dataProvider invalidPaths
      */
@@ -126,6 +126,6 @@ final class ConfigFactoryTest extends TestCase
         $this->expectException(ConfigExceptionInterface::class);
         $this->expectExceptionMessage(sprintf('Invalid config path: "%s".', $path));
 
-        $configFactory->requirePath($path, $key);
+        $configFactory->createFromPath($path, $key);
     }
 }
