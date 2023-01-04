@@ -6,11 +6,11 @@ namespace Ghostwriter\Config\Tests\Unit;
 
 use Closure;
 use EmptyIterator;
-use Generator;
 use Ghostwriter\Config\Config;
+use Ghostwriter\Config\ConfigFactory;
 use Ghostwriter\Config\Contract\ConfigInterface;
+use Ghostwriter\Config\Tests\Unit\Traits\FixtureTrait;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use SplFixedArray;
 use stdClass;
 
@@ -28,6 +28,8 @@ use const PHP_INT_MAX;
  */
 final class ConfigTest extends TestCase
 {
+    use FixtureTrait;
+
     private array $configuration = [];
 
     private ConfigInterface $config;
@@ -62,15 +64,10 @@ final class ConfigTest extends TestCase
             ],
         ];
 
-        $this->config = new Config($this->configuration);
+        $this->setUpConfig($this->configuration);
     }
 
-    /**
-     * @template TValue
-     *
-     * @param array<string, TValue> $options
-     */
-    final public function setUpConfig(array $options = []): ConfigInterface
+    public function setUpConfig(array $options = []): Config
     {
         return $this->config = new Config($options);
     }
@@ -82,12 +79,12 @@ final class ConfigTest extends TestCase
      */
     public function testAddValidOption(string $key, mixed $value): void
     {
-        $this->config = new Config();
+        $config = new Config();
 
-        $this->config->set($key, $value);
+        $config->set($key, $value);
 
         /** @var null|mixed $actual */
-        $actual = $this->config->get($key);
+        $actual = $config->get($key);
 
         self::assertSame($value, $actual);
 
@@ -98,11 +95,12 @@ final class ConfigTest extends TestCase
 
         self::assertSame([
             $key => $value,
-        ], $this->config->toArray());
+        ], $config->toArray());
 
         if (is_iterable($value)) {
+            $expectedCount = $value instanceof Traversable ? iterator_count($value) : count($value);
             /** @var iterable $actual */
-            self::assertCount($value instanceof Traversable ? iterator_count($value) : count($value), $actual);
+            self::assertCount($expectedCount, $actual);
         }
     }
 
@@ -112,12 +110,18 @@ final class ConfigTest extends TestCase
         self::assertInstanceOf(ConfigInterface::class, $this->config);
     }
 
+    /**
+     * @covers \Ghostwriter\Config\ConfigFactory::create
+     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
+     */
     public function testMergeFromPathWithoutOverridingExistingValues(): void
     {
-        $config = new Config();
+        $configFactory = new ConfigFactory();
+        $config = $configFactory->create([]);
+
         self::assertSame([], $config->toArray());
 
-        $config->mergeFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
+        $config = $configFactory->createFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
 
         self::assertSame([
             'config' => [
@@ -128,7 +132,8 @@ final class ConfigTest extends TestCase
             ],
         ], $config->toArray());
 
-        $config->mergeFromPath(dirname(__DIR__) . '/Fixture/config.testing.php', 'config');
+        $config->merge($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
+
         self::assertSame([
             'config' => [
                 'type' => 'local',
@@ -145,6 +150,7 @@ final class ConfigTest extends TestCase
     public function testIsEmpty(): void
     {
         self::assertEmpty(new Config());
+        self::assertNull((new Config())->get('nested.non-existent'));
     }
 
     /** @covers \Ghostwriter\Config\Config::set */
@@ -250,8 +256,10 @@ final class ConfigTest extends TestCase
 
     /**
      * @covers \Ghostwriter\Config\Config::merge
+     * @covers \Ghostwriter\Config\ConfigFactory::create
+     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
      */
-    public function testItCanMergeArray(): void
+    public function testItCanJoinArray(): void
     {
         $this->setUpConfig([
             'foo' => 'foo',
@@ -263,7 +271,7 @@ final class ConfigTest extends TestCase
             'baz' => 'zab',
         ]);
 
-        $this->config->merge($config->toArray());
+        $this->config->join($config->toArray());
 
         self::assertSame('foo', $this->config->get('foo'));
         self::assertSame('rab', $this->config->get('bar'));
@@ -274,6 +282,36 @@ final class ConfigTest extends TestCase
             'baz' => 'zab',
             'bar' => 'rab',
         ], $this->config->toArray());
+
+        $configFactory = new ConfigFactory();
+        $config = $configFactory->create([]);
+
+        self::assertSame([], $config->toArray());
+
+        $config = $configFactory->createFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
+
+        self::assertSame([
+            'config' => [
+                'type' => 'local',
+                'local' => [
+                    'foo' => 'baz',
+                ],
+            ],
+        ], $config->toArray());
+
+        $config->join($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
+
+        self::assertSame([
+            'config' => [
+                'type' => 'testing',
+                'local' => [
+                    'foo' => 'baz',
+                ],
+                'testing' => [
+                    'foo' => 'bar',
+                ],
+            ],
+        ], $config->toArray());
     }
 
     public function testItCanMergeAConfigObjectWithoutOverridingExistingValues(): void
@@ -288,7 +326,7 @@ final class ConfigTest extends TestCase
             'baz' => 'zab',
         ]);
 
-        $config->mergeConfig($gifnoc);
+        $config->merge($gifnoc->toArray());
 
         self::assertSame('foo', $config->get('foo'));
         self::assertSame('rab', $config->get('bar'));
@@ -304,7 +342,7 @@ final class ConfigTest extends TestCase
             ],
         ]);
 
-        $bar = $config->split('bar');
+        $bar = $config->wrap('bar');
 
         self::assertSame('barbaz', $bar->get('baz'));
         self::assertNull($bar->get('foo'));
@@ -314,6 +352,7 @@ final class ConfigTest extends TestCase
     {
         $this->config->set('all-caps', static fn (string $foo): string => mb_strtoupper($foo));
 
+        /** @var ?callable $callable */
         $callable = $this->config->get('all-caps');
 
         self::assertIsCallable($callable);
@@ -331,7 +370,7 @@ final class ConfigTest extends TestCase
 
         self::assertSame('bar', $config['bar']);
         unset($config['bar']);
-        self::assertTrue(isset($config['bar']));
+        self::assertFalse(isset($config['bar']));
         self::assertNull($config['bar']);
 
         self::assertTrue(isset($config['foo']));
@@ -354,21 +393,6 @@ final class ConfigTest extends TestCase
                 'baz' => 'barbaz',
             ],
         ], $config->toArray());
-    }
-
-    public function testIsIterable(): void
-    {
-        $config = new Config([
-            'foo' => true,
-            'bar' => true,
-            'baz' => true,
-        ]);
-
-        self::assertIsIterable($config);
-
-        foreach ($config->getIterator() as $item) {
-            self::assertTrue($item);
-        }
     }
 
     public function testItCanAppendValuesToAnArrayItem(): void
@@ -485,14 +509,15 @@ final class ConfigTest extends TestCase
          ], $this->config['associate']);
      }
 
-     public function testOffsetSet(): void
-     {
-         self::assertNull($this->config['key']);
+    /** @psalm-suppress DocblockTypeContradiction */
+    public function testOffsetSet(): void
+    {
+        self::assertNull($this->config['key']);
 
-         $this->config['key'] = 'value';
+        $this->config['key'] = 'value';
 
-         self::assertSame('value', $this->config['key']);
-     }
+        self::assertSame('value', $this->config['key']);
+    }
 
      public function testOffsetUnset(): void
      {
@@ -501,7 +526,7 @@ final class ConfigTest extends TestCase
 
          unset($this->config['associate']);
 
-         self::assertArrayHasKey('associate', $this->config->toArray());
+         self::assertArrayNotHasKey('associate', $this->config->toArray());
          self::assertNull($this->config->get('associate'));
      }
 
@@ -603,7 +628,10 @@ final class ConfigTest extends TestCase
          self::assertSame(['xxx'], $this->config->get('new_key'));
      }
 
-    private function setValidOptionProvider(): Generator
+    /**
+     * @return iterable<string,array{string,mixed}>
+     */
+    private function setValidOptionProvider(): iterable
     {
         yield 'null' => ['null', null];
         yield 'EmptyIterator' => ['EmptyIterator', new EmptyIterator()];
@@ -628,16 +656,5 @@ final class ConfigTest extends TestCase
                     ],
                 ],
             ]];
-    }
-
-    private function setInvalidOptionProvider(): Generator
-    {
-        yield 'string' => ['key', stdClass::class];
-        // yield 'float' => ['float', 0.5];
-        // yield 'int' => ['int', 1];
-        // yield 'object' => ['object', new stdClass];
-        // yield 'Closure' => ['Closure', static fn (): bool => true];
-        // yield 'array' => ['array', ['key' => 'value']];
-        // yield 'nested-array' => ['nested-array', ['nested' => ['array' => ['key' => 'value']]]];
     }
 }
