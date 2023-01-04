@@ -6,10 +6,8 @@ namespace Ghostwriter\Config;
 
 use Ghostwriter\Config\Contract\ConfigInterface;
 
-use Traversable;
 use function array_merge;
 use function array_shift;
-use function count;
 use function explode;
 use function str_contains;
 
@@ -44,20 +42,11 @@ final class Config implements ConfigInterface
 
     public function get(string $key, mixed $default = null): mixed
     {
-        if (! str_contains($key, '.')) {
-            return $this->options[$key] ?? $default;
-        }
-
-        $options = &$this->options;
-        foreach (explode('.', $key) as $index) {
-            /** @var array<array-key,mixed> $options */
-            if (! array_key_exists($index, $options)) {
-                return $default;
-            }
-            $options = &$options[$index];
-        }
-
-        return $options;
+        return match (true) {
+            array_key_exists($key, $this->options) => $this->options[$key],
+            str_contains($key, '.') => $this->find($key),
+            default => $default
+        };
     }
 
     public function has(string $key): bool
@@ -79,25 +68,34 @@ final class Config implements ConfigInterface
         return true;
     }
 
-    public function mergeConfig(self $config): void
+    /**
+     * Merge the given configuration; overriding existing values.
+     */
+    public function join(array $options, ?string $key = null): void
     {
-        $this->options = array_merge($config->toArray(), $this->options);
+        if ($key === null) {
+            $this->options = array_merge($this->options, $options);
+            return;
+        }
+
+        /** @var array $current */
+        $current = $this->get($key, []);
+        $this->set($key, array_merge($current, $options));
     }
 
     /**
-     * Merge the given configuration options, overriding existing values.
+     * Merge the given configuration options without overriding existing values.
      */
-    public function merge(array $options): void
+    public function merge(array $options, ?string $key = null): void
     {
-        $this->options = array_merge($this->options, $options);
-    }
+        if ($key === null) {
+            $this->options = array_merge($options, $this->options);
+            return;
+        }
 
-    /**
-     * Merge the given configuration without overriding existing values.
-     */
-    public function mergeFromPath(string $path, string $key): void
-    {
-        $this->set($key, array_merge(require $path, $this->get($key, [])));
+        /** @var array $current */
+        $current = $this->get($key, []);
+        $this->set($key, array_merge($options, $current));
     }
 
     public function set(string $key, mixed $value): void
@@ -110,30 +108,11 @@ final class Config implements ConfigInterface
         $options = &$this->options;
         $indexes = explode('.', $key);
         while ($index = array_shift($indexes)) {
+            /** @var array<string,mixed> $options */
             $options = &$options[$index];
         }
         /** @var ?mixed $options */
         $options = $value;
-    }
-
-    public function remove(string $key): void
-    {
-        if (! str_contains($key, '.')) {
-            unset($this->options[$key]);
-
-            return;
-        }
-
-        $options = &$this->options;
-        $indexes = explode('.', $key);
-        $size = count($indexes);
-        while ($size > 1) {
-            --$size;
-            $index = array_shift($indexes);
-            $options[$index] ??= [];
-            $options = &$options[$index];
-        }
-        unset($options[array_shift($indexes)]);
     }
 
     public function count(): int
@@ -141,12 +120,27 @@ final class Config implements ConfigInterface
         return count($this->options);
     }
 
-    public function getIterator(): Traversable
+    public function remove(string $key): void
     {
-        yield from $this->options;
+        if (array_key_exists($key, $this->options)) {
+            unset($this->options[$key]);
+
+            return;
+        }
+
+        $options = &$this->options;
+        $indexes = explode('.', $key);
+        $key = array_pop($indexes);
+
+        while ($index = array_shift($indexes)) {
+            /** @var array<string,mixed> $options */
+            $options = &$options[$index];
+        }
+        /** @var array $options */
+        unset($options[$key]);
     }
 
-    public function split(string $key): ConfigInterface
+    public function wrap(string $key): self
     {
         /** @var array $iterable */
         $iterable = $this->get($key);
@@ -155,22 +149,39 @@ final class Config implements ConfigInterface
 
     public function offsetExists(mixed $offset): bool
     {
+        /** @var string $offset */
         return $this->has($offset);
     }
 
     public function offsetGet(mixed $offset): mixed
     {
+        /** @var string $offset */
         return $this->get($offset);
     }
 
     public function offsetSet(mixed $offset, mixed $value): void
     {
+        /** @var string $offset */
         $this->set($offset, $value);
     }
 
     public function offsetUnset(mixed $offset): void
     {
-        //        $this->remove($offset);
-        $this->set($offset, null);
+        /** @var string $offset */
+        $this->remove($offset);
+    }
+
+    private function find(string $key): mixed
+    {
+        $options = &$this->options;
+        foreach (explode('.', $key) as $index) {
+            /** @var array<array-key,mixed> $options */
+            if (! array_key_exists($index, $options)) {
+                return null;
+            }
+            $options = &$options[$index];
+        }
+
+        return $options;
     }
 }
