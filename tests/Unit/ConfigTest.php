@@ -112,7 +112,7 @@ final class ConfigTest extends TestCase
 
     /**
      * @covers \Ghostwriter\Config\ConfigFactory::create
-     * @covers \Ghostwriter\Config\ConfigFactory::requirePath
+     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
      */
     public function testMergeFromPathWithoutOverridingExistingValues(): void
     {
@@ -121,7 +121,7 @@ final class ConfigTest extends TestCase
 
         self::assertSame([], $config->toArray());
 
-        $config = $configFactory->requirePath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
+        $config = $configFactory->createFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
 
         self::assertSame([
             'config' => [
@@ -132,7 +132,7 @@ final class ConfigTest extends TestCase
             ],
         ], $config->toArray());
 
-        $config->merge($configFactory->requirePath($this->fixture('testing'))->toArray(), 'config');
+        $config->merge($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
 
         self::assertSame([
             'config' => [
@@ -257,7 +257,7 @@ final class ConfigTest extends TestCase
     /**
      * @covers \Ghostwriter\Config\Config::merge
      * @covers \Ghostwriter\Config\ConfigFactory::create
-     * @covers \Ghostwriter\Config\ConfigFactory::requirePath
+     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
      */
     public function testItCanJoinArray(): void
     {
@@ -288,7 +288,7 @@ final class ConfigTest extends TestCase
 
         self::assertSame([], $config->toArray());
 
-        $config = $configFactory->requirePath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
+        $config = $configFactory->createFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
 
         self::assertSame([
             'config' => [
@@ -299,7 +299,7 @@ final class ConfigTest extends TestCase
             ],
         ], $config->toArray());
 
-        $config->join($configFactory->requirePath($this->fixture('testing'))->toArray(), 'config');
+        $config->join($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
 
         self::assertSame([
             'config' => [
