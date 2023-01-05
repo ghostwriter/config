@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer;
 
 use PhpCsFixer\Fixer\Import\GroupImportFixer;
 use PhpCsFixer\Fixer\Operator\BinaryOperatorSpacesFixer;
