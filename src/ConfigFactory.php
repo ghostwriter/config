@@ -10,12 +10,12 @@ use InvalidArgumentException;
 
 final class ConfigFactory implements ConfigFactoryInterface
 {
-    public function create(array $options): Config
+    public function create(array $options = []): Config
     {
         return new Config($options);
     }
 
-    public function createFromPath(string $path, ?string $root = null): Config
+    public function createFromPath(string $path, ?string $key = null): Config
     {
         /**
          * @psalm-suppress UnresolvableInclude
@@ -23,20 +23,21 @@ final class ConfigFactory implements ConfigFactoryInterface
          * @var ?array $options
          */
         $options = require $path;
+
         if (! is_array($options)) {
-            $this->raiseInvalidPathException($path);
+            $this->throwInvalidPathException($path);
         }
 
         /** @var array $options */
         return match (true) {
-            $root === null => new Config($options),
+            null === $key => new Config($options),
             default => new Config([
-                $root => $options,
+                $key => $options,
             ]),
         };
     }
 
-    private function raiseInvalidPathException(string $path): void
+    private function throwInvalidPathException(string $path): never
     {
         throw new class(sprintf(
             'Invalid config path: "%s".',

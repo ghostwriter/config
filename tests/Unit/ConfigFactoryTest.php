@@ -24,28 +24,17 @@ final class ConfigFactoryTest extends TestCase
 {
     use FixtureTrait;
 
+    /**
+     * @return Generator<string, array<string>>
+     */
+    public function invalidPaths(): Generator
+    {
+        yield 'invalid' => [tempnam(sys_get_temp_dir(), 'invalid-key'), 'invalid-key'];
+    }
+
     public function testConstruct(): void
     {
         self::assertInstanceOf(ConfigFactoryInterface::class, new ConfigFactory());
-    }
-
-    /**
-     * @return Generator<string,array<array-key,array>>
-     */
-    public function validOptions(): Generator
-    {
-        yield from [
-            'empty' => [[]],
-            'string' => [[
-                'string-key' => 'string-value',
-            ]],
-            'null' => [[
-                'null' => null,
-            ]],
-            'closure' => [[
-                'closure' => static fn (): string => 'closure',
-            ]],
-        ];
     }
 
     /**
@@ -65,14 +54,23 @@ final class ConfigFactoryTest extends TestCase
     }
 
     /**
-     * @return Generator<string,array<string>>
+     * @covers \Ghostwriter\Config\Config::__construct
+     * @covers \Ghostwriter\Config\Config::get
+     * @covers \Ghostwriter\Config\Config::wrap
+     * @covers \Ghostwriter\Config\Config::toArray
+     * @covers \Ghostwriter\Config\ConfigFactory::throwInvalidPathException
+     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
+     *
+     * @dataProvider invalidPaths
      */
-    public function validPaths(): Generator
+    public function testRequireInvalidPaths(string $path, string $key): void
     {
-        yield from [
-            'local' => [$this->fixture('local'), 'local-key'],
-            'testing' => [$this->fixture('testing'), 'testing-key'],
-        ];
+        $configFactory = new ConfigFactory();
+
+        $this->expectException(ConfigExceptionInterface::class);
+        $this->expectExceptionMessage(sprintf('Invalid config path: "%s".', $path));
+
+        $configFactory->createFromPath($path, $key);
     }
 
     /**
@@ -102,30 +100,32 @@ final class ConfigFactoryTest extends TestCase
     }
 
     /**
-     * @return Generator<string, array<string>>
+     * @return Generator<string,array<array-key,array>>
      */
-    public function invalidPaths(): Generator
+    public function validOptions(): Generator
     {
-        yield 'invalid' => [tempnam(sys_get_temp_dir(), 'invalid-key'), 'invalid-key'];
+        yield from [
+            'empty' => [[]],
+            'string' => [[
+                'string-key' => 'string-value',
+            ]],
+            'null' => [[
+                'null' => null,
+            ]],
+            'closure' => [[
+                'closure' => static fn (): string => 'closure',
+            ]],
+        ];
     }
 
     /**
-     * @covers \Ghostwriter\Config\Config::__construct
-     * @covers \Ghostwriter\Config\Config::get
-     * @covers \Ghostwriter\Config\Config::wrap
-     * @covers \Ghostwriter\Config\Config::toArray
-     * @covers \Ghostwriter\Config\ConfigFactory::raiseInvalidPathException
-     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
-     *
-     * @dataProvider invalidPaths
+     * @return Generator<string,array<string>>
      */
-    public function testRequireInvalidPaths(string $path, string $key): void
+    public function validPaths(): Generator
     {
-        $configFactory = new ConfigFactory();
-
-        $this->expectException(ConfigExceptionInterface::class);
-        $this->expectExceptionMessage(sprintf('Invalid config path: "%s".', $path));
-
-        $configFactory->createFromPath($path, $key);
+        yield from [
+            'local' => [$this->fixture('local'), 'local-key'],
+            'testing' => [$this->fixture('testing'), 'testing-key'],
+        ];
     }
 }

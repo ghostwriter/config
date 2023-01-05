@@ -20,34 +20,78 @@ composer require ghostwriter/config
 ## Usage
 
 ```php
+$configFactory = new ConfigFactory();
+
+$key = 'nested';
+$path = 'path/to/config.php';
+$options = [
+    'settings' => [
+        'enable' => true,
+    ],
+];
+
+$config = $configFactory->create($options);
+$config->toArray(); // ['settings' => ['enable'=>true]]
+
+$config = $configFactory->createFromPath($path);
+$config->toArray(); // ['settings' => ['enable'=>true]]
+
+$config = $configFactory->createFromPath($path, $key);
+$config->toArray(); // ['nested' => ['settings' => ['enable'=>true]]]
+
+//
+
+$config = new Config($options);
+$config->has('settings'); // true
+$config->has('settings.enable'); // true
+$config->get('settings.enable'); // true
+
+$config->has('settings.disabled'); // false
+$config->get('settings.disabled'); // null
+$config->get('settings.disabled', 'default'); // 'default'
+
+$config->set('settings.disabled', false); // true
+$config->has('settings.disabled'); // true
+$config->get('settings.disabled'); // false
+
+$config->toArray(); // ['settings' => ['enable'=>true,'disabled'=>false]]
+```
+
+## API
+
+```php
 // API
-interface ConfigInterface extends ArrayAccess, Countable, IteratorAggregate
+// ConfigFactory
+interface ConfigFactoryInterface
 {
-    public function toArray(): array;
+    public function create(array $options = []): ConfigInterface;
+
+    public function createFromPath(string $path, ?string $key = null): ConfigInterface;
+}
+// Config
+/** @extends ArrayAccess<array-key,mixed> */
+interface ConfigInterface extends ArrayAccess, Countable
+{
+    public function append(string $key, mixed $value): void;
 
     public function get(string $key, mixed $default = null): mixed;
 
     public function has(string $key): bool;
 
-    public function merge(array $options): void;
+    public function join(array $options, ?string $key = null): void;
 
-    public function mergeFromPath(string $path, string $key): void;
-
-    public function set(string $key, mixed $value): void;
-
-    public function push(string $key, mixed $value): void;
-
-    public function remove(string $key): void;
-
-    public function count(): int;
-
-    public function getIterator(): Traversable;
-
-    public function append(string $key, mixed $value): void;
+    public function merge(array $options, ?string $key = null): void;
 
     public function prepend(string $key, mixed $value): void;
 
-    public function split(string $key): self;
+    public function remove(string $key): void;
+
+    public function set(string $key, mixed $value): void;
+
+    /** @return array<array-key,mixed> */
+    public function toArray(): array;
+
+    public function wrap(string $key): self;
 }
 ```
 

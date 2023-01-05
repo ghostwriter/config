@@ -7,13 +7,10 @@ namespace Ghostwriter\Config\Contract;
 use ArrayAccess;
 use Countable;
 
-/**
- * @extends ArrayAccess<array-key,mixed>
- */
+/** @extends ArrayAccess<array-key,mixed> */
 interface ConfigInterface extends ArrayAccess, Countable
 {
-    /** @return array<array-key,mixed> */
-    public function toArray(): array;
+    public function append(string $key, mixed $value): void;
 
     public function get(string $key, mixed $default = null): mixed;
 
@@ -23,13 +20,14 @@ interface ConfigInterface extends ArrayAccess, Countable
 
     public function merge(array $options, ?string $key = null): void;
 
-    public function set(string $key, mixed $value): void;
+    public function prepend(string $key, mixed $value): void;
 
     public function remove(string $key): void;
 
-    public function append(string $key, mixed $value): void;
+    public function set(string $key, mixed $value): void;
 
-    public function prepend(string $key, mixed $value): void;
+    /** @return array<array-key,mixed> */
+    public function toArray(): array;
 
     public function wrap(string $key): self;
 }

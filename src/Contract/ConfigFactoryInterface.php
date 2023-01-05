@@ -6,7 +6,7 @@ namespace Ghostwriter\Config\Contract;
 
 interface ConfigFactoryInterface
 {
-    public function create(array $options): ConfigInterface;
+    public function create(array $options = []): ConfigInterface;
 
-    public function createFromPath(string $path, ?string $root = null): ConfigInterface;
+    public function createFromPath(string $path, ?string $key = null): ConfigInterface;
 }
