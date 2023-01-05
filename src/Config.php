@@ -28,16 +28,9 @@ final class Config implements ConfigInterface
         $this->set($key, [...(array) $current, ...(array) $value]);
     }
 
-    public function prepend(string $key, mixed $value): void
+    public function count(): int
     {
-        /** @var ?array $current */
-        $current = $this->get($key, []);
-        $this->set($key, [...(array) $value, ...(array) $current]);
-    }
-
-    public function toArray(): array
-    {
-        return $this->options;
+        return count($this->options);
     }
 
     public function get(string $key, mixed $default = null): mixed
@@ -55,14 +48,19 @@ final class Config implements ConfigInterface
             return array_key_exists($key, $this->options);
         }
 
-        $options = &$this->options;
+        $options = $this->options;
+
         foreach (explode('.', $key) as $index) {
-            /** @var array<array-key,mixed> $options */
+            if (! is_array($options)) {
+                return false;
+            }
+
             if (! array_key_exists($index, $options)) {
                 return false;
             }
 
-            $options = &$options[$index];
+            /** @var array|mixed $options */
+            $options = $options[$index];
         }
 
         return true;
@@ -73,8 +71,9 @@ final class Config implements ConfigInterface
      */
     public function join(array $options, ?string $key = null): void
     {
-        if ($key === null) {
+        if (null === $key) {
             $this->options = array_merge($this->options, $options);
+
             return;
         }
 
@@ -88,63 +87,15 @@ final class Config implements ConfigInterface
      */
     public function merge(array $options, ?string $key = null): void
     {
-        if ($key === null) {
+        if (null === $key) {
             $this->options = array_merge($options, $this->options);
+
             return;
         }
 
         /** @var array $current */
         $current = $this->get($key, []);
         $this->set($key, array_merge($options, $current));
-    }
-
-    public function set(string $key, mixed $value): void
-    {
-        if (! str_contains($key, '.')) {
-            $this->options[$key] = $value;
-            return;
-        }
-
-        $options = &$this->options;
-        $indexes = explode('.', $key);
-        while ($index = array_shift($indexes)) {
-            /** @var array<string,mixed> $options */
-            $options = &$options[$index];
-        }
-        /** @var ?mixed $options */
-        $options = $value;
-    }
-
-    public function count(): int
-    {
-        return count($this->options);
-    }
-
-    public function remove(string $key): void
-    {
-        if (array_key_exists($key, $this->options)) {
-            unset($this->options[$key]);
-
-            return;
-        }
-
-        $options = &$this->options;
-        $indexes = explode('.', $key);
-        $key = array_pop($indexes);
-
-        while ($index = array_shift($indexes)) {
-            /** @var array<string,mixed> $options */
-            $options = &$options[$index];
-        }
-        /** @var array $options */
-        unset($options[$key]);
-    }
-
-    public function wrap(string $key): self
-    {
-        /** @var array $iterable */
-        $iterable = $this->get($key);
-        return new self($iterable);
     }
 
     public function offsetExists(mixed $offset): bool
@@ -171,14 +122,83 @@ final class Config implements ConfigInterface
         $this->remove($offset);
     }
 
+    public function prepend(string $key, mixed $value): void
+    {
+        /** @var ?array $current */
+        $current = $this->get($key, []);
+        $this->set($key, [...(array) $value, ...(array) $current]);
+    }
+
+    public function remove(string $key): void
+    {
+        if (array_key_exists($key, $this->options)) {
+            unset($this->options[$key]);
+
+            return;
+        }
+
+        $options = &$this->options;
+        $indexes = explode('.', $key);
+        $key = array_pop($indexes);
+
+        while ($index = array_shift($indexes)) {
+            /** @var array<string,mixed> $options */
+            $options = &$options[$index];
+        }
+
+        /** @var array $options */
+        unset($options[$key]);
+    }
+
+    public function set(string $key, mixed $value): void
+    {
+        if (! str_contains($key, '.')) {
+            $this->options[$key] = $value;
+
+            return;
+        }
+
+        $options = &$this->options;
+        $indexes = explode('.', $key);
+
+        while ($index = array_shift($indexes)) {
+            /** @var array<string,mixed> $options */
+            $options = &$options[$index];
+        }
+
+        /** @var ?mixed $options */
+        $options = $value;
+    }
+
+    public function toArray(): array
+    {
+        return $this->options;
+    }
+
+    public function wrap(string $key): self
+    {
+        /** @var array|mixed $value */
+        $value = $this->get($key);
+
+        return new self(match (true) {
+            is_array($value) => $value,
+            default => [$value]
+        });
+    }
+
     private function find(string $key): mixed
     {
         $options = &$this->options;
+
         foreach (explode('.', $key) as $index) {
-            /** @var array<array-key,mixed> $options */
+            if (! is_array($options)) {
+                return null;
+            }
+
             if (! array_key_exists($index, $options)) {
                 return null;
             }
+
             $options = &$options[$index];
         }
 
