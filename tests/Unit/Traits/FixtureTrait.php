@@ -13,7 +13,7 @@ trait FixtureTrait
     {
         $realpath = realpath(sprintf('%s/Fixture/config.%s.php', dirname(__DIR__, 2), mb_strtolower($path)));
 
-        if ($realpath === false) {
+        if (false === $realpath) {
             throw new class(
                 'Invalid fixture path: ' . $path
             ) extends InvalidArgumentException implements ConfigExceptionInterface {
