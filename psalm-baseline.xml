@@ -1,2 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.4.0@62db5d4f6a7ae0a20f7cc5a4952d730272fc0863"/>
+<files psalm-version="5.11.0@c9b192ab8400fdaf04b2b13d110575adc879aa90">
+  <file src="src/Config.php">
+    <PossiblyUnusedMethod>
+      <code>count</code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="tests/Unit/ConfigFactoryTest.php">
+    <PossiblyUnusedMethod>
+      <code>validOptions</code>
+      <code>validPaths</code>
+    </PossiblyUnusedMethod>
+    <UnresolvableInclude>
+      <code>require $path</code>
+    </UnresolvableInclude>
+  </file>
+  <file src="tests/Unit/ConfigTest.php">
+    <DocblockTypeContradiction>
+      <code>assertSame</code>
+    </DocblockTypeContradiction>
+    <PossiblyUnusedMethod>
+      <code>setValidOptionProvider</code>
+    </PossiblyUnusedMethod>
+    <PossiblyUnusedReturnValue>
+      <code>Config</code>
+    </PossiblyUnusedReturnValue>
+  </file>
+</files>
