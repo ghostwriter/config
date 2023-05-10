@@ -5,21 +5,19 @@ declare(strict_types=1);
 namespace Ghostwriter\Config\Tests\Unit;
 
 use Generator;
+use Ghostwriter\Config\Config;
 use Ghostwriter\Config\ConfigFactory;
 use Ghostwriter\Config\Contract\ConfigFactoryInterface;
 use Ghostwriter\Config\Contract\Exception\ConfigExceptionInterface;
 use Ghostwriter\Config\Tests\Unit\Traits\FixtureTrait;
 
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Ghostwriter\Config\ConfigFactory
- *
- * @internal
- *
- * @small
- */
+#[CoversClass(Config::class)]
+#[CoversClass(ConfigFactory::class)]
 final class ConfigFactoryTest extends TestCase
 {
     use FixtureTrait;
@@ -27,7 +25,7 @@ final class ConfigFactoryTest extends TestCase
     /**
      * @return Generator<string, array<string>>
      */
-    public function invalidPaths(): Generator
+    public static function invalidPaths(): Generator
     {
         yield 'invalid' => [tempnam(sys_get_temp_dir(), 'invalid-key'), 'invalid-key'];
     }
@@ -37,13 +35,7 @@ final class ConfigFactoryTest extends TestCase
         self::assertInstanceOf(ConfigFactoryInterface::class, new ConfigFactory());
     }
 
-    /**
-     * @covers \Ghostwriter\Config\Config::__construct
-     * @covers \Ghostwriter\Config\Config::toArray
-     * @covers \Ghostwriter\Config\ConfigFactory::create
-     *
-     * @dataProvider validOptions
-     */
+    #[DataProvider('validOptions')]
     public function testCreate(array $options): void
     {
         $configFactory = new ConfigFactory();
@@ -53,16 +45,7 @@ final class ConfigFactoryTest extends TestCase
         self::assertSame($options, $config->toArray());
     }
 
-    /**
-     * @covers \Ghostwriter\Config\Config::__construct
-     * @covers \Ghostwriter\Config\Config::get
-     * @covers \Ghostwriter\Config\Config::wrap
-     * @covers \Ghostwriter\Config\Config::toArray
-     * @covers \Ghostwriter\Config\ConfigFactory::throwInvalidPathException
-     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
-     *
-     * @dataProvider invalidPaths
-     */
+    #[DataProvider('invalidPaths')]
     public function testRequireInvalidPaths(string $path, string $key): void
     {
         $configFactory = new ConfigFactory();
@@ -73,19 +56,7 @@ final class ConfigFactoryTest extends TestCase
         $configFactory->createFromPath($path, $key);
     }
 
-    /**
-     * @covers \Ghostwriter\Config\Config::__construct
-     * @covers \Ghostwriter\Config\Config::get
-     * @covers \Ghostwriter\Config\Config::has
-     * @covers \Ghostwriter\Config\Config::offsetExists
-     * @covers \Ghostwriter\Config\Config::wrap
-     * @covers \Ghostwriter\Config\Config::toArray
-     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
-     *
-     * @dataProvider validPaths
-     *
-     * @psalm-suppress UnresolvableInclude
-     */
+    #[DataProvider('validPaths')]
     public function testRequirePath(string $path, string $key): void
     {
         $configFactory = new ConfigFactory();
@@ -96,13 +67,16 @@ final class ConfigFactoryTest extends TestCase
 
         /** @var array $options */
         $options = require $path;
-        self::assertSame($options, $config->wrap($key)->toArray());
+
+        self::assertSame([
+            $key => $options,
+        ], $config->wrap($key)  ->toArray());
     }
 
     /**
      * @return Generator<string,array<array-key,array>>
      */
-    public function validOptions(): Generator
+    public static function validOptions(): Generator
     {
         yield from [
             'empty' => [[]],
@@ -121,11 +95,11 @@ final class ConfigFactoryTest extends TestCase
     /**
      * @return Generator<string,array<string>>
      */
-    public function validPaths(): Generator
+    public static function validPaths(): Generator
     {
         yield from [
-            'local' => [$this->fixture('local'), 'local-key'],
-            'testing' => [$this->fixture('testing'), 'testing-key'],
+            'local' => [self::fixture('local'), 'local-key'],
+            'testing' => [self::fixture('testing'), 'testing-key'],
         ];
     }
 }
