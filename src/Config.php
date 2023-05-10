@@ -51,11 +51,7 @@ final class Config implements ConfigInterface
         $options = $this->options;
 
         foreach (explode('.', $key) as $index) {
-            if (! is_array($options)) {
-                return false;
-            }
-
-            if (! array_key_exists($index, $options)) {
+            if (! is_array($options) || ! array_key_exists($index, $options)) {
                 return false;
             }
 
@@ -71,7 +67,7 @@ final class Config implements ConfigInterface
      */
     public function join(array $options, ?string $key = null): void
     {
-        if (null === $key) {
+        if ($key === null) {
             $this->options = array_merge($this->options, $options);
 
             return;
@@ -87,15 +83,15 @@ final class Config implements ConfigInterface
      */
     public function merge(array $options, ?string $key = null): void
     {
-        if (null === $key) {
-            $this->options = array_merge($options, $this->options);
+        if ($key === null) {
+            $this->options = [...$options, ...$this->options];
 
             return;
         }
 
         /** @var array $current */
         $current = $this->get($key, []);
-        $this->set($key, array_merge($options, $current));
+        $this->set($key, [...$options, ...$current]);
     }
 
     public function offsetExists(mixed $offset): bool
@@ -180,10 +176,9 @@ final class Config implements ConfigInterface
         /** @var array|mixed $value */
         $value = $this->get($key);
 
-        return new self(match (true) {
-            is_array($value) => $value,
-            default => [$value]
-        });
+        return new self([
+            $key => $value,
+        ]);
     }
 
     private function find(string $key): mixed
@@ -191,11 +186,7 @@ final class Config implements ConfigInterface
         $options = &$this->options;
 
         foreach (explode('.', $key) as $index) {
-            if (! is_array($options)) {
-                return null;
-            }
-
-            if (! array_key_exists($index, $options)) {
+            if (! is_array($options) || ! array_key_exists($index, $options)) {
                 return null;
             }
 
