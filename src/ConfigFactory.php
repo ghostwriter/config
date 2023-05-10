@@ -30,7 +30,7 @@ final class ConfigFactory implements ConfigFactoryInterface
 
         /** @var array $options */
         return match (true) {
-            null === $key => new Config($options),
+            $key === null => new Config($options),
             default => new Config([
                 $key => $options,
             ]),
