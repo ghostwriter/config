@@ -6,10 +6,13 @@ namespace Ghostwriter\Config\Tests\Unit;
 
 use Closure;
 use EmptyIterator;
+use Generator;
 use Ghostwriter\Config\Config;
 use Ghostwriter\Config\ConfigFactory;
 use Ghostwriter\Config\Contract\ConfigInterface;
 use Ghostwriter\Config\Tests\Unit\Traits\FixtureTrait;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SplFixedArray;
 use stdClass;
@@ -19,13 +22,8 @@ use Traversable;
 use const PHP_FLOAT_MAX;
 use const PHP_INT_MAX;
 
-/**
- * @covers \Ghostwriter\Config\Config
- *
- * @internal
- *
- * @small
- */
+#[CoversClass(Config::class)]
+#[CoversClass(ConfigFactory::class)]
 final class ConfigTest extends TestCase
 {
     use FixtureTrait;
@@ -72,7 +70,38 @@ final class ConfigTest extends TestCase
         return $this->config = new Config($options);
     }
 
-    /** @covers \Ghostwriter\Config\Config::set */
+    /**
+     * @return Generator<string,array{string,mixed}>
+     */
+    public static function setValidOptionProvider(): Generator
+    {
+        yield 'null' => ['null', null];
+        yield 'EmptyIterator' => ['EmptyIterator', new EmptyIterator()];
+        yield 'SplFixedArray' => ['SplFixedArray', new SplFixedArray()];
+        yield 'string' => ['key', stdClass::class];
+        yield 'float' => ['float', PHP_FLOAT_MAX];
+        yield 'int' => ['int', PHP_INT_MAX];
+        yield 'object' => ['object', new stdClass()];
+        yield 'Closure' => [
+            'Closure',
+            static fn (): bool => true,
+        ];
+
+        yield 'array' => [
+            'array', [
+                'key' => 'value',
+            ]];
+
+        yield 'nested-array' => [
+            'nested-array', [
+                'nested' => [
+                    'array' => [
+                        'key' => 'value',
+                    ],
+                ],
+            ]];
+    }
+
     public function testAdd(): void
     {
         $expected = [
@@ -90,14 +119,10 @@ final class ConfigTest extends TestCase
         self::assertSame('value', $this->config->get('key'));
     }
 
-    /**
-     * @covers \Ghostwriter\Config\Config::set
-     * @covers \Ghostwriter\Config\Config::get
-     */
     public function testAddAndGetUsingDotNotation(): void
     {
         $this->setUpConfig([
-            'app'=>'key',
+            'app' => 'key',
         ]);
         $this->config->set('foo.bar.baz', 'foo-bar-baz');
 
@@ -120,21 +145,17 @@ final class ConfigTest extends TestCase
         self::assertSame('foo-bar-baz', $this->config->get('foo.bar.baz'));
     }
 
-     public function testAddArray(): void
-     {
-         $this->config->merge([
-             'key1' => 'value1',
-             'key2' => 'value2',
-         ]);
-         self::assertSame('value1', $this->config->get('key1'));
-         self::assertSame('value2', $this->config->get('key2'));
-     }
+    public function testAddArray(): void
+    {
+        $this->config->merge([
+            'key1' => 'value1',
+            'key2' => 'value2',
+        ]);
+        self::assertSame('value1', $this->config->get('key1'));
+        self::assertSame('value2', $this->config->get('key2'));
+    }
 
-    /**
-     * @covers \Ghostwriter\Config\Config::set
-     *
-     * @dataProvider setValidOptionProvider
-     */
+    #[DataProvider('setValidOptionProvider')]
     public function testAddValidOption(string $key, mixed $value): void
     {
         $config = new Config();
@@ -166,24 +187,22 @@ final class ConfigTest extends TestCase
         self::assertCount($expectedCount, $actual);
     }
 
-     /** @covers \Ghostwriter\Config\Config::append */
-     public function testAppend(): void
-     {
-         $this->config->append('array', 'xxx');
-         self::assertSame('xxx', $this->config->get('array.2'));
-     }
+    public function testAppend(): void
+    {
+        $this->config->append('array', 'xxx');
+        self::assertSame('xxx', $this->config->get('array.2'));
+    }
 
-     /** @covers \Ghostwriter\Config\Config::append */
-     public function testAppendWithNewKey(): void
-     {
-         $this->config->append('new-array-key', 'xxx');
-         self::assertSame(['xxx'], $this->config->get('new-array-key'));
-     }
+    public function testAppendWithNewKey(): void
+    {
+        $this->config->append('new-array-key', 'xxx');
+        self::assertSame(['xxx'], $this->config->get('new-array-key'));
+    }
 
-     public function testGet(): void
-     {
-         self::assertSame('bar', $this->config->get('foo'));
-     }
+    public function testGet(): void
+    {
+        self::assertSame('bar', $this->config->get('foo'));
+    }
 
 //     public function testGetWithArrayOfKeys(): void
 //     {
@@ -235,21 +254,21 @@ final class ConfigTest extends TestCase
 //         ]));
 //     }
 
-     public function testGetWithDefault(): void
-     {
-         self::assertSame('default', $this->config->get('not-exist', 'default'));
-     }
+    public function testGetWithDefault(): void
+    {
+        self::assertSame('default', $this->config->get('not-exist', 'default'));
+    }
 
-     public function testHasIsFalse(): void
-     {
-         self::assertFalse($this->config->has('not-exist'));
-         self::assertFalse($this->config->has('foo.not-exist'));
-     }
+    public function testHasIsFalse(): void
+    {
+        self::assertFalse($this->config->has('not-exist'));
+        self::assertFalse($this->config->has('foo.not-exist'));
+    }
 
-     public function testHasIsTrue(): void
-     {
-         self::assertTrue($this->config->has('foo'));
-     }
+    public function testHasIsTrue(): void
+    {
+        self::assertTrue($this->config->has('foo'));
+    }
 
     public function testInstantiable(): void
     {
@@ -282,7 +301,7 @@ final class ConfigTest extends TestCase
 
     public function testItCanBeHandledLikeAnArray(): void
     {
-        $config        = new Config([
+        $config = new Config([
             'foo' => 'foo',
             'bar' => 'bar',
         ]);
@@ -290,10 +309,10 @@ final class ConfigTest extends TestCase
 
         self::assertSame('bar', $config['bar']);
         unset($config['bar']);
-        self::assertFalse(isset($config['bar']));
+        self::assertArrayNotHasKey('bar', $config);
         self::assertNull($config['bar']);
 
-        self::assertTrue(isset($config['foo']));
+        self::assertArrayHasKey('foo', $config);
         self::assertSame('foo', $config['foo']);
         self::assertSame('baz', $config['baz']);
     }
@@ -315,11 +334,6 @@ final class ConfigTest extends TestCase
         ], $config->toArray());
     }
 
-    /**
-     * @covers \Ghostwriter\Config\Config::merge
-     * @covers \Ghostwriter\Config\ConfigFactory::create
-     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
-     */
     public function testItCanJoinArray(): void
     {
         $this->setUpConfig([
@@ -434,7 +448,7 @@ final class ConfigTest extends TestCase
 
         $bar = $config->wrap('bar');
 
-        self::assertSame('barbaz', $bar->get('baz'));
+        self::assertSame('barbaz', $bar->get('bar.baz'));
         self::assertNull($bar->get('foo'));
     }
 
@@ -482,10 +496,6 @@ final class ConfigTest extends TestCase
         ], $config->toArray());
     }
 
-    /**
-     * @covers \Ghostwriter\Config\ConfigFactory::create
-     * @covers \Ghostwriter\Config\ConfigFactory::createFromPath
-     */
     public function testMergeFromPathWithoutOverridingExistingValues(): void
     {
         $configFactory = new ConfigFactory();
@@ -504,6 +514,8 @@ final class ConfigTest extends TestCase
             ],
         ], $config->toArray());
 
+        self::assertCount(1, $config);
+
         $config->merge($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
 
         self::assertSame([
@@ -517,25 +529,26 @@ final class ConfigTest extends TestCase
                 ],
             ],
         ], $config->toArray());
+
+        self::assertCount(1, $config);
     }
 
-     public function testOffsetExists(): void
-     {
-         self::assertArrayHasKey('foo', $this->config);
-         self::assertArrayNotHasKey('not-exist', $this->config);
-     }
+    public function testOffsetExists(): void
+    {
+        self::assertArrayHasKey('foo', $this->config);
+        self::assertArrayNotHasKey('not-exist', $this->config);
+    }
 
-     public function testOffsetGet(): void
-     {
-         self::assertNull($this->config['not-exist']);
-         self::assertSame('bar', $this->config['foo']);
-         self::assertSame([
-             'x' => 'xxx',
-             'y' => 'yyy',
-         ], $this->config['associate']);
-     }
+    public function testOffsetGet(): void
+    {
+        self::assertNull($this->config['not-exist']);
+        self::assertSame('bar', $this->config['foo']);
+        self::assertSame([
+            'x' => 'xxx',
+            'y' => 'yyy',
+        ], $this->config['associate']);
+    }
 
-    /** @psalm-suppress DocblockTypeContradiction */
     public function testOffsetSet(): void
     {
         self::assertNull($this->config['key']);
@@ -545,30 +558,29 @@ final class ConfigTest extends TestCase
         self::assertSame('value', $this->config['key']);
     }
 
-     public function testOffsetUnset(): void
-     {
-         self::assertArrayHasKey('associate', $this->config->toArray());
-         self::assertSame($this->config['associate'], $this->config->get('associate'));
+    public function testOffsetUnset(): void
+    {
+        self::assertArrayHasKey('associate', $this->config->toArray());
+        self::assertSame($this->config['associate'], $this->config->get('associate'));
 
-         unset($this->config['associate']);
+        unset($this->config['associate']);
 
-         self::assertArrayNotHasKey('associate', $this->config->toArray());
-         self::assertNull($this->config->get('associate'));
-     }
+        self::assertArrayNotHasKey('associate', $this->config->toArray());
+        self::assertNull($this->config->get('associate'));
+    }
 
-     public function testPrepend(): void
-     {
-         $this->config->prepend('array', 'xxx');
-         self::assertSame('xxx', $this->config->get('array.0'));
-     }
+    public function testPrepend(): void
+    {
+        $this->config->prepend('array', 'xxx');
+        self::assertSame('xxx', $this->config->get('array.0'));
+    }
 
-     public function testPrependWithNewKey(): void
-     {
-         $this->config->prepend('new_key', 'xxx');
-         self::assertSame(['xxx'], $this->config->get('new_key'));
-     }
+    public function testPrependWithNewKey(): void
+    {
+        $this->config->prepend('new_key', 'xxx');
+        self::assertSame(['xxx'], $this->config->get('new_key'));
+    }
 
-    /** @covers \Ghostwriter\Config\Config::get */
     public function testReturnsDefaultConfigOptionValueIfConfigOptionDoesNotExist(): void
     {
         self::assertNull($this->config->get('does-not-exist'));
@@ -577,19 +589,16 @@ final class ConfigTest extends TestCase
         self::assertInstanceOf(stdClass::class, $this->config->get('does-not-exist', new stdClass()));
     }
 
-    /** @covers \Ghostwriter\Config\Config::has */
     public function testReturnsFalseIfKeyDoesNotExist(): void
     {
         self::assertFalse($this->config->has('does-not-exist'));
     }
 
-    /** @covers \Ghostwriter\Config\Config::get */
     public function testReturnsNullIfConfigOptionDoesNotExist(): void
     {
         self::assertNull($this->config->get('does-not-exist'));
     }
 
-    /** @covers \Ghostwriter\Config\Config::has */
     public function testReturnsTrueIfHas(): void
     {
         $this->config = new Config([
@@ -599,7 +608,6 @@ final class ConfigTest extends TestCase
         self::assertTrue($this->config->has('has'));
     }
 
-    /** @covers \Ghostwriter\Config\Config::has */
     public function testReturnsTrueIfKeyExist(): void
     {
         $config = new Config([
@@ -611,7 +619,6 @@ final class ConfigTest extends TestCase
         self::assertTrue($config->has('foo.bar'));
     }
 
-    /** @covers \Ghostwriter\Config\Config::has */
     public function testReturnsTrueIfKeyIsBooleanFalse(): void
     {
         $this->config = new Config([
@@ -621,61 +628,28 @@ final class ConfigTest extends TestCase
         self::assertTrue($this->config->has('false'));
     }
 
-     public function testSet(): void
-     {
-         $this->config->set('key', 'value');
-         self::assertSame('value', $this->config->get('key'));
-     }
-
-     /** @covers \Ghostwriter\Config\Config::toArray */
-     public function testToArray(): void
-     {
-         self::assertSame($this->configuration, $this->config->toArray());
-     }
-
-     /**
-      * @covers \Ghostwriter\Config\Config::toArray
-      * @covers \Ghostwriter\Config\Config::wrap
-      */
-     public function testWrap(): void
-     {
-         $config = new Config([
-             'foo' => 'bar',
-             'foobar' => ['foo', 'baz'],
-         ]);
-         self::assertSame(['bar'], $config->wrap('foo')->toArray());
-         self::assertSame(['foo', 'baz'], $config->wrap('foobar')->toArray());
-     }
-
-    /**
-     * @return iterable<string,array{string,mixed}>
-     */
-    private function setValidOptionProvider(): iterable
+    public function testSet(): void
     {
-        yield 'null' => ['null', null];
-        yield 'EmptyIterator' => ['EmptyIterator', new EmptyIterator()];
-        yield 'SplFixedArray' => ['SplFixedArray', new SplFixedArray()];
-        yield 'string' => ['key', stdClass::class];
-        yield 'float' => ['float', PHP_FLOAT_MAX];
-        yield 'int' => ['int', PHP_INT_MAX];
-        yield 'object' => ['object', new stdClass()];
-        yield 'Closure' => [
-            'Closure',
-            static fn (): bool => true,
-        ];
+        $this->config->set('key', 'value');
+        self::assertSame('value', $this->config->get('key'));
+    }
 
-        yield 'array' => [
-            'array', [
-                'key' => 'value',
-            ]];
+    public function testToArray(): void
+    {
+        self::assertSame($this->configuration, $this->config->toArray());
+    }
 
-        yield 'nested-array' => [
-            'nested-array', [
-                'nested' => [
-                    'array' => [
-                        'key' => 'value',
-                    ],
-                ],
-            ]];
+    public function testWrap(): void
+    {
+        $config = new Config([
+            'foo' => 'bar',
+            'foobar' => ['foo', 'baz'],
+        ]);
+        self::assertSame([
+            'foo' => 'bar',
+        ], $config->wrap('foo')  ->toArray());
+        self::assertSame([
+            'foobar' => ['foo', 'baz'],
+        ], $config->wrap('foobar')  ->toArray());
     }
 }
