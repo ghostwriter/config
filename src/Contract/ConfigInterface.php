@@ -26,7 +26,9 @@ interface ConfigInterface extends ArrayAccess, Countable
 
     public function set(string $key, mixed $value): void;
 
-    /** @return array<array-key,mixed> */
+    /**
+     * @return array<array-key,mixed>
+     */
     public function toArray(): array;
 
     public function wrap(string $key): self;
