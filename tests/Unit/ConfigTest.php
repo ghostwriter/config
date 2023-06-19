@@ -204,55 +204,55 @@ final class ConfigTest extends TestCase
         self::assertSame('bar', $this->config->get('foo'));
     }
 
-//     public function testGetWithArrayOfKeys(): void
-//     {
-//         $this->assertSame([
-//             'foo' => 'bar',
-//             'bar' => 'baz',
-//             'none' => null,
-//         ], $this->config->get([
-//             'foo',
-//             'bar',
-//             'none',
-//         ]));
-//
-//         $this->assertSame([
-//             'x.y' => 'default',
-//             'x.z' => 'zoo',
-//             'bar' => 'baz',
-//             'baz' => 'bat',
-//         ], $this->config->get([
-//             'x.y' => 'default',
-//             'x.z' => 'default',
-//             'bar' => 'default',
-//             'baz',
-//         ]));
-//     }
+    //     public function testGetWithArrayOfKeys(): void
+    //     {
+    //         $this->assertSame([
+    //             'foo' => 'bar',
+    //             'bar' => 'baz',
+    //             'none' => null,
+    //         ], $this->config->get([
+    //             'foo',
+    //             'bar',
+    //             'none',
+    //         ]));
+    //
+    //         $this->assertSame([
+    //             'x.y' => 'default',
+    //             'x.z' => 'zoo',
+    //             'bar' => 'baz',
+    //             'baz' => 'bat',
+    //         ], $this->config->get([
+    //             'x.y' => 'default',
+    //             'x.z' => 'default',
+    //             'bar' => 'default',
+    //             'baz',
+    //         ]));
+    //     }
 
-//     public function testGetMany(): void
-//     {
-//         $this->assertSame([
-//             'foo' => 'bar',
-//             'bar' => 'baz',
-//             'none' => null,
-//         ], $this->config->getMany([
-//             'foo',
-//             'bar',
-//             'none',
-//         ]));
-//
-//         $this->assertSame([
-//             'x.y' => 'default',
-//             'x.z' => 'zoo',
-//             'bar' => 'baz',
-//             'baz' => 'bat',
-//         ], $this->config->getMany([
-//             'x.y' => 'default',
-//             'x.z' => 'default',
-//             'bar' => 'default',
-//             'baz',
-//         ]));
-//     }
+    //     public function testGetMany(): void
+    //     {
+    //         $this->assertSame([
+    //             'foo' => 'bar',
+    //             'bar' => 'baz',
+    //             'none' => null,
+    //         ], $this->config->getMany([
+    //             'foo',
+    //             'bar',
+    //             'none',
+    //         ]));
+    //
+    //         $this->assertSame([
+    //             'x.y' => 'default',
+    //             'x.z' => 'zoo',
+    //             'bar' => 'baz',
+    //             'baz' => 'bat',
+    //         ], $this->config->getMany([
+    //             'x.y' => 'default',
+    //             'x.z' => 'default',
+    //             'bar' => 'default',
+    //             'baz',
+    //         ]));
+    //     }
 
     public function testGetWithDefault(): void
     {
