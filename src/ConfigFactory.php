@@ -39,10 +39,7 @@ final class ConfigFactory implements ConfigFactoryInterface
 
     private function throwInvalidPathException(string $path): never
     {
-        throw new class(sprintf(
-            'Invalid config path: "%s".',
-            $path
-        )) extends InvalidArgumentException implements ConfigExceptionInterface {
+        throw new class(sprintf('Invalid config path: "%s".', $path)) extends InvalidArgumentException implements ConfigExceptionInterface {
         };
     }
 }
