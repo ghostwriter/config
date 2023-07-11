@@ -112,9 +112,6 @@ final class ConfigTest extends TestCase
         $this->config->set('key', 'value');
 
         self::assertSame($expected, $this->config->toArray());
-        // self::assertSame([], $this->config->toArray());
-        // self::assertSame([], $this->config);
-
         self::assertTrue($this->config->has('key'));
         self::assertSame('value', $this->config->get('key'));
     }
@@ -193,6 +190,19 @@ final class ConfigTest extends TestCase
         self::assertSame('xxx', $this->config->get('array.2'));
     }
 
+    public function testAppendingToANonArrayItem(): void
+    {
+        $config = new Config([
+            'foo' => 'bar',
+        ]);
+
+        $config->append('foo', 'baz');
+
+        self::assertSame([
+            'foo' => ['bar', 'baz'],
+        ], $config->toArray());
+    }
+
     public function testAppendWithNewKey(): void
     {
         $this->config->append('new-array-key', 'xxx');
@@ -203,56 +213,6 @@ final class ConfigTest extends TestCase
     {
         self::assertSame('bar', $this->config->get('foo'));
     }
-
-    //     public function testGetWithArrayOfKeys(): void
-    //     {
-    //         $this->assertSame([
-    //             'foo' => 'bar',
-    //             'bar' => 'baz',
-    //             'none' => null,
-    //         ], $this->config->get([
-    //             'foo',
-    //             'bar',
-    //             'none',
-    //         ]));
-    //
-    //         $this->assertSame([
-    //             'x.y' => 'default',
-    //             'x.z' => 'zoo',
-    //             'bar' => 'baz',
-    //             'baz' => 'bat',
-    //         ], $this->config->get([
-    //             'x.y' => 'default',
-    //             'x.z' => 'default',
-    //             'bar' => 'default',
-    //             'baz',
-    //         ]));
-    //     }
-
-    //     public function testGetMany(): void
-    //     {
-    //         $this->assertSame([
-    //             'foo' => 'bar',
-    //             'bar' => 'baz',
-    //             'none' => null,
-    //         ], $this->config->getMany([
-    //             'foo',
-    //             'bar',
-    //             'none',
-    //         ]));
-    //
-    //         $this->assertSame([
-    //             'x.y' => 'default',
-    //             'x.z' => 'zoo',
-    //             'bar' => 'baz',
-    //             'baz' => 'bat',
-    //         ], $this->config->getMany([
-    //             'x.y' => 'default',
-    //             'x.z' => 'default',
-    //             'bar' => 'default',
-    //             'baz',
-    //         ]));
-    //     }
 
     public function testGetWithDefault(): void
     {
@@ -468,34 +428,6 @@ final class ConfigTest extends TestCase
         self::assertFalse($this->config->has('foo.baz'));
     }
 
-    public function testItThrowsAnErrorWhenAppendingToANonArrayItem(): void
-    {
-        $config = new Config([
-            'foo' => 'bar',
-        ]);
-
-        // $this->expectException(RuntimeException::class);
-        $config->append('foo', 'baz');
-
-        self::assertSame([
-            'foo' => ['bar', 'baz'],
-        ], $config->toArray());
-    }
-
-    public function testItThrowsAnErrorWhenPrependingToANonArrayItem(): void
-    {
-        $config = new Config([
-            'foo' => 'bar',
-        ]);
-
-        // $this->expectException(RuntimeException::class);
-
-        $config->prepend('foo', 'baz');
-        self::assertSame([
-            'foo' => ['baz', 'bar'],
-        ], $config->toArray());
-    }
-
     public function testMergeFromPathWithoutOverridingExistingValues(): void
     {
         $configFactory = new ConfigFactory();
@@ -573,6 +505,18 @@ final class ConfigTest extends TestCase
     {
         $this->config->prepend('array', 'xxx');
         self::assertSame('xxx', $this->config->get('array.0'));
+    }
+
+    public function testPrependingToANonArrayItem(): void
+    {
+        $config = new Config([
+            'foo' => 'bar',
+        ]);
+
+        $config->prepend('foo', 'baz');
+        self::assertSame([
+            'foo' => ['baz', 'bar'],
+        ], $config->toArray());
     }
 
     public function testPrependWithNewKey(): void
