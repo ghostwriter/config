@@ -28,7 +28,7 @@ interface ConfigInterface extends ArrayAccess, Countable
     /**
      * @template TMerge
      *
-     * @param non-empty-array<string,TMerge> $options
+     * @param array<string,TMerge>|non-empty-array<string,TMerge> $options
      */
     public function merge(array $options, ?string $key = null): void;
 
