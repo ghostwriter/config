@@ -7,11 +7,13 @@ namespace Ghostwriter\Config\Tests\Unit;
 use Generator;
 use Ghostwriter\Config\Config;
 use Ghostwriter\Config\ConfigFactory;
-use Ghostwriter\Config\Contract\ConfigFactoryInterface;
-use Ghostwriter\Config\Contract\Exception\ConfigExceptionInterface;
+use Ghostwriter\Config\Exception\InvalidConfigFileException;
+use Ghostwriter\Config\ExceptionInterface;
+use Ghostwriter\Config\FactoryInterface;
 use Ghostwriter\Config\Tests\Unit\Traits\FixtureTrait;
 
 
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -32,9 +34,14 @@ final class ConfigFactoryTest extends TestCase
 
     public function testConstruct(): void
     {
-        self::assertInstanceOf(ConfigFactoryInterface::class, new ConfigFactory());
+        Assert::assertInstanceOf(FactoryInterface::class, new ConfigFactory());
     }
 
+    /**
+     * @template T
+     *
+     * @param array<string,T> $options
+     */
     #[DataProvider('validOptions')]
     public function testCreate(array $options): void
     {
@@ -42,7 +49,7 @@ final class ConfigFactoryTest extends TestCase
 
         $config = $configFactory->create($options);
 
-        self::assertSame($options, $config->toArray());
+        Assert::assertSame($options, $config->toArray());
     }
 
     #[DataProvider('invalidPaths')]
@@ -50,8 +57,9 @@ final class ConfigFactoryTest extends TestCase
     {
         $configFactory = new ConfigFactory();
 
-        $this->expectException(ConfigExceptionInterface::class);
-        $this->expectExceptionMessage(sprintf('Invalid config path: "%s".', $path));
+        $this->expectException(ExceptionInterface::class);
+        $this->expectException(InvalidConfigFileException::class);
+        $this->expectExceptionMessage($path);
 
         $configFactory->createFromPath($path, $key);
     }
@@ -63,14 +71,18 @@ final class ConfigFactoryTest extends TestCase
 
         $config = $configFactory->createFromPath($path, $key);
 
-        self::assertArrayHasKey($key, $config);
+        Assert::assertArrayHasKey($key, $config);
+
+        Assert::assertTrue(
+            is_file($path)
+        );
 
         /** @var array $options */
         $options = require $path;
 
-        self::assertSame([
+        Assert::assertSame([
             $key => $options,
-        ], $config->wrap($key)  ->toArray());
+        ], $config->wrap($key)->toArray());
     }
 
     /**
