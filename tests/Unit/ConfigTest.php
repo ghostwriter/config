@@ -9,8 +9,9 @@ use EmptyIterator;
 use Generator;
 use Ghostwriter\Config\Config;
 use Ghostwriter\Config\ConfigFactory;
-use Ghostwriter\Config\Contract\ConfigInterface;
+use Ghostwriter\Config\ConfigInterface;
 use Ghostwriter\Config\Tests\Unit\Traits\FixtureTrait;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -65,6 +66,9 @@ final class ConfigTest extends TestCase
         $this->setUpConfig($this->configuration);
     }
 
+    /**
+     * @param array<array-key,mixed> $options
+     */
     public function setUpConfig(array $options = []): Config
     {
         return $this->config = new Config($options);
@@ -111,9 +115,9 @@ final class ConfigTest extends TestCase
 
         $this->config->set('key', 'value');
 
-        self::assertSame($expected, $this->config->toArray());
-        self::assertTrue($this->config->has('key'));
-        self::assertSame('value', $this->config->get('key'));
+        Assert::assertSame($expected, $this->config->toArray());
+        Assert::assertTrue($this->config->has('key'));
+        Assert::assertSame('value', $this->config->get('key'));
     }
 
     public function testAddAndGetUsingDotNotation(): void
@@ -123,7 +127,7 @@ final class ConfigTest extends TestCase
         ]);
         $this->config->set('foo.bar.baz', 'foo-bar-baz');
 
-        self::assertSame([
+        Assert::assertSame([
             'app' => 'key',
             'foo' => [
                 'bar' => [
@@ -131,15 +135,15 @@ final class ConfigTest extends TestCase
                 ],
             ],
         ], $this->config->toArray());
-        self::assertSame([
+        Assert::assertSame([
             'bar' => [
                 'baz' => 'foo-bar-baz',
             ],
         ], $this->config->get('foo'));
-        self::assertSame([
+        Assert::assertSame([
             'baz' => 'foo-bar-baz',
         ], $this->config->get('foo.bar'));
-        self::assertSame('foo-bar-baz', $this->config->get('foo.bar.baz'));
+        Assert::assertSame('foo-bar-baz', $this->config->get('foo.bar.baz'));
     }
 
     public function testAddArray(): void
@@ -148,8 +152,8 @@ final class ConfigTest extends TestCase
             'key1' => 'value1',
             'key2' => 'value2',
         ]);
-        self::assertSame('value1', $this->config->get('key1'));
-        self::assertSame('value2', $this->config->get('key2'));
+        Assert::assertSame('value1', $this->config->get('key1'));
+        Assert::assertSame('value2', $this->config->get('key2'));
     }
 
     #[DataProvider('setValidOptionProvider')]
@@ -162,14 +166,14 @@ final class ConfigTest extends TestCase
         /** @var null|mixed $actual */
         $actual = $config->get($key);
 
-        self::assertSame($value, $actual);
+        Assert::assertSame($value, $actual);
 
         if (is_callable($value)) {
             /** @var callable $actual */
-            self::assertSame($value(), $actual());
+            Assert::assertSame($value(), $actual());
         }
 
-        self::assertSame([
+        Assert::assertSame([
             $key => $value,
         ], $config->toArray());
 
@@ -181,13 +185,13 @@ final class ConfigTest extends TestCase
             ? iterator_count($value)
             : count($value);
         /** @var iterable $actual */
-        self::assertCount($expectedCount, $actual);
+        Assert::assertCount($expectedCount, $actual);
     }
 
     public function testAppend(): void
     {
         $this->config->append('array', 'xxx');
-        self::assertSame('xxx', $this->config->get('array.2'));
+        Assert::assertSame('xxx', $this->config->get('array.2'));
     }
 
     public function testAppendingToANonArrayItem(): void
@@ -198,7 +202,7 @@ final class ConfigTest extends TestCase
 
         $config->append('foo', 'baz');
 
-        self::assertSame([
+        Assert::assertSame([
             'foo' => ['bar', 'baz'],
         ], $config->toArray());
     }
@@ -206,40 +210,40 @@ final class ConfigTest extends TestCase
     public function testAppendWithNewKey(): void
     {
         $this->config->append('new-array-key', 'xxx');
-        self::assertSame(['xxx'], $this->config->get('new-array-key'));
+        Assert::assertSame(['xxx'], $this->config->get('new-array-key'));
     }
 
     public function testGet(): void
     {
-        self::assertSame('bar', $this->config->get('foo'));
+        Assert::assertSame('bar', $this->config->get('foo'));
     }
 
     public function testGetWithDefault(): void
     {
-        self::assertSame('default', $this->config->get('not-exist', 'default'));
+        Assert::assertSame('default', $this->config->get('not-exist', 'default'));
     }
 
     public function testHasIsFalse(): void
     {
-        self::assertFalse($this->config->has('not-exist'));
-        self::assertFalse($this->config->has('foo.not-exist'));
+        Assert::assertFalse($this->config->has('not-exist'));
+        Assert::assertFalse($this->config->has('foo.not-exist'));
     }
 
     public function testHasIsTrue(): void
     {
-        self::assertTrue($this->config->has('foo'));
+        Assert::assertTrue($this->config->has('foo'));
     }
 
     public function testInstantiable(): void
     {
-        self::assertInstanceOf(Config::class, $this->config);
-        self::assertInstanceOf(ConfigInterface::class, $this->config);
+        Assert::assertInstanceOf(Config::class, $this->config);
+        Assert::assertInstanceOf(ConfigInterface::class, $this->config);
     }
 
     public function testIsEmpty(): void
     {
-        self::assertEmpty(new Config());
-        self::assertNull((new Config())->get('nested.non-existent'));
+        Assert::assertEmpty(new Config());
+        Assert::assertNull((new Config())->get('nested.non-existent'));
     }
 
     public function testItCanAppendValuesToAnArrayItem(): void
@@ -252,11 +256,11 @@ final class ConfigTest extends TestCase
 
         $config->append('app.vars', 'baz');
 
-        self::assertSame(['foo', 'bar', 'baz'], $config->get('app.vars'));
+        Assert::assertSame(['foo', 'bar', 'baz'], $config->get('app.vars'));
 
         $config->append('app.vars', ['qux', 'quux']);
 
-        self::assertSame(['foo', 'bar', 'baz', 'qux', 'quux'], $config->get('app.vars'));
+        Assert::assertSame(['foo', 'bar', 'baz', 'qux', 'quux'], $config->get('app.vars'));
     }
 
     public function testItCanBeHandledLikeAnArray(): void
@@ -267,14 +271,14 @@ final class ConfigTest extends TestCase
         ]);
         $config['baz'] = 'baz';
 
-        self::assertSame('bar', $config['bar']);
+        Assert::assertSame('bar', $config['bar']);
         unset($config['bar']);
-        self::assertArrayNotHasKey('bar', $config);
-        self::assertNull($config['bar']);
+        Assert::assertArrayNotHasKey('bar', $config);
+        Assert::assertNull($config['bar']);
 
-        self::assertArrayHasKey('foo', $config);
-        self::assertSame('foo', $config['foo']);
-        self::assertSame('baz', $config['baz']);
+        Assert::assertArrayHasKey('foo', $config);
+        Assert::assertSame('foo', $config['foo']);
+        Assert::assertSame('baz', $config['baz']);
     }
 
     public function testItCanBeReturnedAsAnArray(): void
@@ -286,7 +290,7 @@ final class ConfigTest extends TestCase
             ],
         ]);
 
-        self::assertSame([
+        Assert::assertSame([
             'foo' => 'foo',
             'bar' => [
                 'baz' => 'barbaz',
@@ -308,11 +312,11 @@ final class ConfigTest extends TestCase
 
         $this->config->join($config->toArray());
 
-        self::assertSame('foo', $this->config->get('foo'));
-        self::assertSame('rab', $this->config->get('bar'));
-        self::assertSame('zab', $this->config->get('baz'));
+        Assert::assertSame('foo', $this->config->get('foo'));
+        Assert::assertSame('rab', $this->config->get('bar'));
+        Assert::assertSame('zab', $this->config->get('baz'));
 
-        self::assertSame([
+        Assert::assertSame([
             'foo' => 'foo',
             'baz' => 'zab',
             'bar' => 'rab',
@@ -321,11 +325,11 @@ final class ConfigTest extends TestCase
         $configFactory = new ConfigFactory();
         $config = $configFactory->create([]);
 
-        self::assertSame([], $config->toArray());
+        Assert::assertSame([], $config->toArray());
 
         $config = $configFactory->createFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
 
-        self::assertSame([
+        Assert::assertSame([
             'config' => [
                 'type' => 'local',
                 'local' => [
@@ -336,7 +340,7 @@ final class ConfigTest extends TestCase
 
         $config->join($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
 
-        self::assertSame([
+        Assert::assertSame([
             'config' => [
                 'type' => 'testing',
                 'local' => [
@@ -363,9 +367,9 @@ final class ConfigTest extends TestCase
 
         $config->merge($gifnoc->toArray());
 
-        self::assertSame('foo', $config->get('foo'));
-        self::assertSame('rab', $config->get('bar'));
-        self::assertSame('baz', $config->get('baz'));
+        Assert::assertSame('foo', $config->get('foo'));
+        Assert::assertSame('rab', $config->get('bar'));
+        Assert::assertSame('baz', $config->get('baz'));
     }
 
     public function testItCanPrependValuesToAnArrayItem(): void
@@ -378,11 +382,11 @@ final class ConfigTest extends TestCase
 
         $config->prepend('app.vars', 'baz');
 
-        self::assertSame(['baz', 'foo', 'bar'], $config->get('app.vars'));
+        Assert::assertSame(['baz', 'foo', 'bar'], $config->get('app.vars'));
 
         $config->prepend('app.vars', ['qux', 'quux']);
 
-        self::assertSame(['qux', 'quux', 'baz', 'foo', 'bar'], $config->get('app.vars'));
+        Assert::assertSame(['qux', 'quux', 'baz', 'foo', 'bar'], $config->get('app.vars'));
     }
 
     public function testItCanSetAndRetrieveAClosure(): void
@@ -392,9 +396,9 @@ final class ConfigTest extends TestCase
         /** @var ?callable $callable */
         $callable = $this->config->get('all-caps');
 
-        self::assertIsCallable($callable);
-        self::assertInstanceOf(Closure::class, $callable);
-        self::assertSame('STRING', $callable('string'));
+        Assert::assertIsCallable($callable);
+        Assert::assertInstanceOf(Closure::class, $callable);
+        Assert::assertSame('STRING', $callable('string'));
     }
 
     public function testItCanSplitIntoASubObject(): void
@@ -408,8 +412,8 @@ final class ConfigTest extends TestCase
 
         $bar = $config->wrap('bar');
 
-        self::assertSame('barbaz', $bar->get('bar.baz'));
-        self::assertNull($bar->get('foo'));
+        Assert::assertSame('barbaz', $bar->get('bar.baz'));
+        Assert::assertNull($bar->get('foo'));
     }
 
     public function testItCanUnsetAnOption(): void
@@ -424,8 +428,8 @@ final class ConfigTest extends TestCase
         $this->config->remove('foo.baz');
         $this->config->remove('foo.qux');
 
-        self::assertTrue($this->config->has('foo.bar'));
-        self::assertFalse($this->config->has('foo.baz'));
+        Assert::assertTrue($this->config->has('foo.bar'));
+        Assert::assertFalse($this->config->has('foo.baz'));
     }
 
     public function testMergeFromPathWithoutOverridingExistingValues(): void
@@ -433,11 +437,11 @@ final class ConfigTest extends TestCase
         $configFactory = new ConfigFactory();
         $config = $configFactory->create([]);
 
-        self::assertSame([], $config->toArray());
+        Assert::assertSame([], $config->toArray());
 
         $config = $configFactory->createFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
 
-        self::assertSame([
+        Assert::assertSame([
             'config' => [
                 'type' => 'local',
                 'local' => [
@@ -446,11 +450,11 @@ final class ConfigTest extends TestCase
             ],
         ], $config->toArray());
 
-        self::assertCount(1, $config);
+        Assert::assertSame(1, $config->count());
 
         $config->merge($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
 
-        self::assertSame([
+        Assert::assertSame([
             'config' => [
                 'type' => 'local',
                 'testing' => [
@@ -462,20 +466,20 @@ final class ConfigTest extends TestCase
             ],
         ], $config->toArray());
 
-        self::assertCount(1, $config);
+        Assert::assertCount(1, $config);
     }
 
     public function testOffsetExists(): void
     {
-        self::assertArrayHasKey('foo', $this->config);
-        self::assertArrayNotHasKey('not-exist', $this->config);
+        Assert::assertArrayHasKey('foo', $this->config);
+        Assert::assertArrayNotHasKey('not-exist', $this->config);
     }
 
     public function testOffsetGet(): void
     {
-        self::assertNull($this->config['not-exist']);
-        self::assertSame('bar', $this->config['foo']);
-        self::assertSame([
+        Assert::assertNull($this->config['not-exist']);
+        Assert::assertSame('bar', $this->config['foo']);
+        Assert::assertSame([
             'x' => 'xxx',
             'y' => 'yyy',
         ], $this->config['associate']);
@@ -483,28 +487,34 @@ final class ConfigTest extends TestCase
 
     public function testOffsetSet(): void
     {
-        self::assertNull($this->config['key']);
+        Assert::assertArrayNotHasKey('key', $this->config);
+
+        Assert::assertNull($this->config['key']);
 
         $this->config['key'] = 'value';
 
-        self::assertSame('value', $this->config['key']);
+        Assert::assertArrayHasKey('key', $this->config);
+
+        Assert::assertNotNull($this->config['key']);
+
+        Assert::assertSame('value', $this->config['key']);
     }
 
     public function testOffsetUnset(): void
     {
-        self::assertArrayHasKey('associate', $this->config->toArray());
-        self::assertSame($this->config['associate'], $this->config->get('associate'));
+        Assert::assertArrayHasKey('associate', $this->config->toArray());
+        Assert::assertSame($this->config['associate'], $this->config->get('associate'));
 
         unset($this->config['associate']);
 
-        self::assertArrayNotHasKey('associate', $this->config->toArray());
-        self::assertNull($this->config->get('associate'));
+        Assert::assertArrayNotHasKey('associate', $this->config->toArray());
+        Assert::assertNull($this->config->get('associate'));
     }
 
     public function testPrepend(): void
     {
         $this->config->prepend('array', 'xxx');
-        self::assertSame('xxx', $this->config->get('array.0'));
+        Assert::assertSame('xxx', $this->config->get('array.0'));
     }
 
     public function testPrependingToANonArrayItem(): void
@@ -514,7 +524,7 @@ final class ConfigTest extends TestCase
         ]);
 
         $config->prepend('foo', 'baz');
-        self::assertSame([
+        Assert::assertSame([
             'foo' => ['baz', 'bar'],
         ], $config->toArray());
     }
@@ -522,25 +532,25 @@ final class ConfigTest extends TestCase
     public function testPrependWithNewKey(): void
     {
         $this->config->prepend('new_key', 'xxx');
-        self::assertSame(['xxx'], $this->config->get('new_key'));
+        Assert::assertSame(['xxx'], $this->config->get('new_key'));
     }
 
     public function testReturnsDefaultConfigOptionValueIfConfigOptionDoesNotExist(): void
     {
-        self::assertNull($this->config->get('does-not-exist'));
-        self::assertTrue($this->config->get('does-not-exist', true));
-        self::assertFalse($this->config->get('does-not-exist', false));
-        self::assertInstanceOf(stdClass::class, $this->config->get('does-not-exist', new stdClass()));
+        Assert::assertNull($this->config->get('does-not-exist'));
+        Assert::assertTrue($this->config->get('does-not-exist', true));
+        Assert::assertFalse($this->config->get('does-not-exist', false));
+        Assert::assertInstanceOf(stdClass::class, $this->config->get('does-not-exist', new stdClass()));
     }
 
     public function testReturnsFalseIfKeyDoesNotExist(): void
     {
-        self::assertFalse($this->config->has('does-not-exist'));
+        Assert::assertFalse($this->config->has('does-not-exist'));
     }
 
     public function testReturnsNullIfConfigOptionDoesNotExist(): void
     {
-        self::assertNull($this->config->get('does-not-exist'));
+        Assert::assertNull($this->config->get('does-not-exist'));
     }
 
     public function testReturnsTrueIfHas(): void
@@ -549,7 +559,7 @@ final class ConfigTest extends TestCase
             'has' => 'some-item',
         ]);
 
-        self::assertTrue($this->config->has('has'));
+        Assert::assertTrue($this->config->has('has'));
     }
 
     public function testReturnsTrueIfKeyExist(): void
@@ -560,7 +570,7 @@ final class ConfigTest extends TestCase
             ],
         ]);
 
-        self::assertTrue($config->has('foo.bar'));
+        Assert::assertTrue($config->has('foo.bar'));
     }
 
     public function testReturnsTrueIfKeyIsBooleanFalse(): void
@@ -569,18 +579,18 @@ final class ConfigTest extends TestCase
             'false' => false,
         ]);
 
-        self::assertTrue($this->config->has('false'));
+        Assert::assertTrue($this->config->has('false'));
     }
 
     public function testSet(): void
     {
         $this->config->set('key', 'value');
-        self::assertSame('value', $this->config->get('key'));
+        Assert::assertSame('value', $this->config->get('key'));
     }
 
     public function testToArray(): void
     {
-        self::assertSame($this->configuration, $this->config->toArray());
+        Assert::assertSame($this->configuration, $this->config->toArray());
     }
 
     public function testWrap(): void
@@ -589,10 +599,10 @@ final class ConfigTest extends TestCase
             'foo' => 'bar',
             'foobar' => ['foo', 'baz'],
         ]);
-        self::assertSame([
+        Assert::assertSame([
             'foo' => 'bar',
         ], $config->wrap('foo')  ->toArray());
-        self::assertSame([
+        Assert::assertSame([
             'foobar' => ['foo', 'baz'],
         ], $config->wrap('foobar')  ->toArray());
     }
