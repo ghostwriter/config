@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Ghostwriter\Config\Tests\Unit\Traits;
 
-use Ghostwriter\Config\Contract\Exception\ConfigExceptionInterface;
-use InvalidArgumentException;
+use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
 
 trait FixtureTrait
 {
@@ -14,8 +13,7 @@ trait FixtureTrait
         $realpath = realpath(sprintf('%s/Fixture/config.%s.php', dirname(__DIR__, 2), mb_strtolower($path)));
 
         if ($realpath === false) {
-            throw new class('Invalid fixture path: ' . $path) extends InvalidArgumentException implements ConfigExceptionInterface {
-            };
+            throw new ConfigFileNotFoundException($path);
         }
 
         return $realpath;
