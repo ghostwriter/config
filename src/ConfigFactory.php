@@ -4,42 +4,50 @@ declare(strict_types=1);
 
 namespace Ghostwriter\Config;
 
-use Ghostwriter\Config\Contract\ConfigFactoryInterface;
-use Ghostwriter\Config\Contract\Exception\ConfigExceptionInterface;
-use InvalidArgumentException;
+use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
+use Ghostwriter\Config\Exception\InvalidConfigFileException;
 
-final class ConfigFactory implements ConfigFactoryInterface
+final class ConfigFactory implements FactoryInterface
 {
+    /**
+     * Create a new configuration.
+     *
+     * @template TCreate
+     *
+     * @param array<string,TCreate>|non-empty-array<string,TCreate> $options
+     */
     public function create(array $options = []): Config
     {
         return new Config($options);
     }
 
+    /**
+     * @template TCreateFromPath
+     *
+     * @throws ConfigFileNotFoundException
+     * @throws InvalidConfigFileException
+     */
     public function createFromPath(string $path, ?string $key = null): Config
     {
-        /**
-         * @psalm-suppress UnresolvableInclude
-         *
-         * @var ?array $options
-         */
+        if (! is_file($path)) {
+            throw new ConfigFileNotFoundException($path);
+        }
+
+        /** @var array<string,TCreateFromPath>|TCreateFromPath $options */
         $options = require $path;
 
         if (! is_array($options)) {
-            $this->throwInvalidPathException($path);
+            throw new InvalidConfigFileException($path);
         }
 
-        /** @var array $options */
-        return match (true) {
-            $key === null => new Config($options),
-            default => new Config([
+        if ($key !== null) {
+            /** @var array<string,TCreateFromPath> $options */
+            $options = [
                 $key => $options,
-            ]),
-        };
-    }
+            ];
+        }
 
-    private function throwInvalidPathException(string $path): never
-    {
-        throw new class(sprintf('Invalid config path: "%s".', $path)) extends InvalidArgumentException implements ConfigExceptionInterface {
-        };
+        /** @var array<string,TCreateFromPath> $options */
+        return new Config($options);
     }
 }
