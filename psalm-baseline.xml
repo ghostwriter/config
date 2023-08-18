@@ -1,2 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.13.1@086b94371304750d1c673315321a55d15fc59015"/>
+<files psalm-version="5.14.1@b9d355e0829c397b9b3b47d0c0ed042a8a70284d">
+  <file src="src/Config.php">
+    <RedundantCastGivenDocblockType>
+      <code>(array) $current</code>
+      <code><![CDATA[(array) $this->get($key, [])]]></code>
+    </RedundantCastGivenDocblockType>
+  </file>
+  <file src="tests/Unit/ConfigTest.php">
+    <DocblockTypeContradiction>
+      <code>assertNotNull</code>
+    </DocblockTypeContradiction>
+    <InvalidArgument>
+      <code><![CDATA[$config->toArray()]]></code>
+    </InvalidArgument>
+    <MixedArgumentTypeCoercion>
+      <code>$options</code>
+    </MixedArgumentTypeCoercion>
+    <PropertyNotSetInConstructor>
+      <code>$config</code>
+    </PropertyNotSetInConstructor>
+    <TypeDoesNotContainType>
+      <code>assertSame</code>
+      <code>assertSame</code>
+      <code>assertSame</code>
+      <code>assertSame</code>
+      <code>assertSame</code>
+      <code>assertSame</code>
+      <code>assertSame</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="tests/Unit/Traits/FixtureTrait.php">
+    <MissingThrowsDocblock>
+      <code>throw new ConfigFileNotFoundException($path);</code>
+    </MissingThrowsDocblock>
+  </file>
+</files>
