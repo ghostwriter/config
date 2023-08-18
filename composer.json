@@ -90,5 +90,10 @@
         "xdebug": [
             "@putenv XDEBUG_MODE=coverage"
         ]
+    },
+    "config": {
+        "platform": {
+            "php": "8.1.999"
+        }
     }
 }
