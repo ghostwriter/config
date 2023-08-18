@@ -56,8 +56,6 @@ final class ConfigFactoryTest extends TestCase
     }
 
     /**
-     * @param string $path
-     * @param string $key
      * @param class-string<Throwable> $exception
      */
     #[DataProvider('invalidPaths')]
