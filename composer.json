@@ -45,12 +45,6 @@
             "Ghostwriter\\Config\\Tests\\": "tests/"
         }
     },
-    "config": {
-        "allow-plugins": {
-            "infection/extension-installer": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
-    },
     "scripts": {
         "cache:clear": [
             "rm -fr ./.cache"
