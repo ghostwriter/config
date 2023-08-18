@@ -7,16 +7,18 @@ namespace Ghostwriter\Config\Tests\Unit;
 use Generator;
 use Ghostwriter\Config\Config;
 use Ghostwriter\Config\ConfigFactory;
+use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
 use Ghostwriter\Config\Exception\InvalidConfigFileException;
 use Ghostwriter\Config\ExceptionInterface;
 use Ghostwriter\Config\FactoryInterface;
+
+
 use Ghostwriter\Config\Tests\Unit\Traits\FixtureTrait;
-
-
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 #[CoversClass(Config::class)]
 #[CoversClass(ConfigFactory::class)]
@@ -29,7 +31,8 @@ final class ConfigFactoryTest extends TestCase
      */
     public static function invalidPaths(): Generator
     {
-        yield 'invalid' => [tempnam(sys_get_temp_dir(), 'invalid-key'), 'invalid-key'];
+        yield 'invalid-file-contents' => [tempnam(sys_get_temp_dir(), 'invalid-key'), 'not-an-array', InvalidConfigFileException::class];
+        yield 'invalid-file-path' => ['invalid/file/path', 'not-a-file', ConfigFileNotFoundException::class];
     }
 
     public function testConstruct(): void
@@ -52,13 +55,20 @@ final class ConfigFactoryTest extends TestCase
         Assert::assertSame($options, $config->toArray());
     }
 
+    /**
+     * @param string $path
+     * @param string $key
+     * @param class-string<Throwable> $exception
+     */
     #[DataProvider('invalidPaths')]
-    public function testRequireInvalidPaths(string $path, string $key): void
+    public function testRequireInvalidPaths(string $path, string $key, string $exception): void
     {
         $configFactory = new ConfigFactory();
 
         $this->expectException(ExceptionInterface::class);
-        $this->expectException(InvalidConfigFileException::class);
+
+        $this->expectException($exception);
+
         $this->expectExceptionMessage($path);
 
         $configFactory->createFromPath($path, $key);
