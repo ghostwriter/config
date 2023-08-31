@@ -1,37 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.14.1@b9d355e0829c397b9b3b47d0c0ed042a8a70284d">
+<files psalm-version="5.15.0@5c774aca4746caf3d239d9c8cadb9f882ca29352">
   <file src="src/Config.php">
+    <PossiblyUnusedMethod>
+      <code>count</code>
+    </PossiblyUnusedMethod>
     <RedundantCastGivenDocblockType>
       <code>(array) $current</code>
       <code><![CDATA[(array) $this->get($key, [])]]></code>
     </RedundantCastGivenDocblockType>
   </file>
-  <file src="tests/Unit/ConfigTest.php">
-    <DocblockTypeContradiction>
-      <code>assertNotNull</code>
-    </DocblockTypeContradiction>
-    <InvalidArgument>
-      <code><![CDATA[$config->toArray()]]></code>
-    </InvalidArgument>
-    <MixedArgumentTypeCoercion>
+  <file src="src/ConfigFactory.php">
+    <UnusedClass>
+      <code>ConfigFactory</code>
+    </UnusedClass>
+  </file>
+  <file src="src/ConfigInterface.php">
+    <PossiblyUnusedMethod>
+      <code>append</code>
+      <code>join</code>
+      <code>merge</code>
+      <code>prepend</code>
+      <code>toArray</code>
+      <code>wrap</code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="src/FactoryInterface.php">
+    <PossiblyUnusedMethod>
+      <code>create</code>
+      <code>createFromPath</code>
+    </PossiblyUnusedMethod>
+  </file>
+  <file src="tests/Unit/ConfigFactoryTest.php">
+    <UndefinedClass>
+      <code>TestCase</code>
+    </UndefinedClass>
+    <UnusedParam>
+      <code>$exception</code>
+      <code>$key</code>
+      <code>$key</code>
       <code>$options</code>
-    </MixedArgumentTypeCoercion>
-    <PropertyNotSetInConstructor>
-      <code>$config</code>
-    </PropertyNotSetInConstructor>
-    <TypeDoesNotContainType>
-      <code>assertSame</code>
-      <code>assertSame</code>
-      <code>assertSame</code>
-      <code>assertSame</code>
-      <code>assertSame</code>
-      <code>assertSame</code>
-      <code>assertSame</code>
-    </TypeDoesNotContainType>
+      <code>$path</code>
+      <code>$path</code>
+    </UnusedParam>
+  </file>
+  <file src="tests/Unit/ConfigTest.php">
+    <UndefinedClass>
+      <code>TestCase</code>
+    </UndefinedClass>
+    <UnusedParam>
+      <code>$key</code>
+      <code>$options</code>
+      <code>$value</code>
+    </UnusedParam>
   </file>
   <file src="tests/Unit/Traits/FixtureTrait.php">
-    <MissingThrowsDocblock>
-      <code>throw new ConfigFileNotFoundException($path);</code>
-    </MissingThrowsDocblock>
+    <PossiblyUnusedParam>
+      <code>$path</code>
+    </PossiblyUnusedParam>
   </file>
 </files>
