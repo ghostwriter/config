@@ -2,12 +2,13 @@
 <psalm
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
-    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    xsi:schemaLocation="https://getpsalm.org/schema/config https://getpsalm.org/schema/config"
     addParamDefaultToDocblockType="true"
     allowStringToStandInForClass="true"
     cacheDirectory=".cache/psalm"
     checkForThrowsDocblock="true"
     checkForThrowsInGlobalScope="true"
+    disableSuppressAll="true"
     ensureArrayIntOffsetsExist="true"
     ensureArrayStringOffsetsExist="true"
     errorBaseline="psalm-baseline.xml"
@@ -16,21 +17,21 @@
     findUnusedCode="true"
     findUnusedPsalmSuppress="true"
     findUnusedVariablesAndParams="true"
+    ignoreInternalFunctionFalseReturn="false"
+    ignoreInternalFunctionNullReturn="false"
     sealAllMethods="true"
     sealAllProperties="true"
 >
     <projectFiles>
-        <directory name="src"/>
-        <directory name="tests"/>
+        <directory name="src" />
+        <directory name="tests" />
         <ignoreFiles>
-            <directory name=".github"/>
-            <directory name="tests/Fixture"/>
-            <directory name="vendor"/>
-            <file name="ecs.php"/>
-            <file name="rector.php"/>
+            <directory name=".github" />
+            <directory name="tests/Fixture" />
+            <directory name="vendor" />
         </ignoreFiles>
     </projectFiles>
     <plugins>
-        <pluginClass class="Ghostwriter\PsalmPlugin\Plugin"/>
+        <pluginClass class="Ghostwriter\PsalmPlugin\Plugin" />
     </plugins>
 </psalm>
