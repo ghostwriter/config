@@ -8,6 +8,7 @@
     beStrictAboutTodoAnnotatedTests="true"
     bootstrap="vendor/autoload.php"
     cacheDirectory=".cache/phpunit"
+    cacheResult="false"
     colors="true"
     displayDetailsOnIncompleteTests="true"
     displayDetailsOnSkippedTests="true"
