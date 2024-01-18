@@ -2,77 +2,384 @@
 
 declare(strict_types=1);
 
-namespace Ghostwriter\Config\Tests\Unit;
+namespace Ghostwriter\ConfigTests\Unit;
 
 use Closure;
 use EmptyIterator;
 use Generator;
 use Ghostwriter\Config\Config;
-use Ghostwriter\Config\ConfigFactory;
-use Ghostwriter\Config\ConfigInterface;
-use Ghostwriter\Config\Tests\Unit\Traits\FixtureTrait;
-use PHPUnit\Framework\Assert;
+use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
+use Ghostwriter\Config\Exception\InvalidConfigFileException;
+use Ghostwriter\Config\Interface\ConfigExceptionInterface;
+use Ghostwriter\Config\Interface\ConfigInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SplFixedArray;
 use stdClass;
-
-
+use Throwable;
 use Traversable;
-
 use const PHP_FLOAT_MAX;
 use const PHP_INT_MAX;
+use function count;
+use function dirname;
+use function is_callable;
+use function is_file;
+use function is_iterable;
+use function iterator_count;
+use function mb_strtolower;
+use function mb_strtoupper;
+use function realpath;
+use function sprintf;
+use function sys_get_temp_dir;
+use function tempnam;
 
 #[CoversClass(Config::class)]
-#[CoversClass(ConfigFactory::class)]
 final class ConfigTest extends TestCase
 {
-    use FixtureTrait;
-
-    private ConfigInterface $config;
-
-    private array $configuration = [];
-
-    protected function setUp(): void
+    /**
+     * @template TMixed
+     *
+     * @param array<string,TMixed> $options
+     */
+    public function createConfig(array $options = []): Config
     {
-        parent::setUp();
+        return new Config($options);
+    }
 
-        $this->configuration = [
-            'BLM' => '#BlackLivesMatter',
-            'bool' => [
-                'true' => true,
-                'false' => false,
+    public function testAdd(): void
+    {
+        $config = Config::new(self::fixture('dev'));
+
+        $expected = [
+            ...$config->toArray(),
+            'key' => 'value',
+        ];
+
+        $config->set('key', 'value');
+
+        self::assertSame($expected, $config->toArray());
+        self::assertTrue($config->has('key'));
+        self::assertSame('value', $config->get('key'));
+    }
+
+    public function testAddAndGetUsingDotNotation(): void
+    {
+        $config = new Config([
+            'app' => 'key',
+        ]);
+
+        $config->set('foo.bar.baz', 'foo-bar-baz');
+
+        self::assertSame([
+            'app' => 'key',
+            'foo' => [
+                'bar' => [
+                    'baz' => 'foo-bar-baz',
+                ],
             ],
-            'int' => PHP_INT_MAX,
-            'float' => PHP_FLOAT_MAX,
-            'null' => null,
-            'array' => ['foo', 'bar'],
+        ], $config->toArray());
+        self::assertSame([
+            'bar' => [
+                'baz' => 'foo-bar-baz',
+            ],
+        ], $config->get('foo'));
+        self::assertSame([
+            'baz' => 'foo-bar-baz',
+        ], $config->get('foo.bar'));
+        self::assertSame('foo-bar-baz', $config->get('foo.bar.baz'));
+    }
+
+    #[DataProvider('setValidOptionProvider')]
+    public function testAddValidOption(string $key, mixed $value): void
+    {
+        $config = new Config();
+
+        $config->set($key, $value);
+
+        /** @var null|mixed $actual */
+        $actual = $config->get($key);
+
+        self::assertSame($value, $actual);
+
+        if (is_callable($value)) {
+            /** @var callable $actual */
+            self::assertSame($value(), $actual());
+        }
+
+        self::assertSame([
+            $key => $value,
+        ], $config->toArray());
+
+        if (! is_iterable($value)) {
+            return;
+        }
+
+        $expectedCount = $value instanceof Traversable
+            ? iterator_count($value)
+            : count($value);
+        /** @var iterable $actual */
+        self::assertCount($expectedCount, $actual);
+    }
+
+    public function testDefault(): void
+    {
+        $config = new Config([
+            'config' => [
+                'type' => 'local',
+                'testing' => [
+                    'foo' => 'bar',
+                ],
+                'local' => [
+                    'foo' => 'baz',
+                ],
+            ],
+        ]);
+
+        self::assertSame('local', $config->get('config.type', 'remote'));
+    }
+
+    public function testGet(): void
+    {
+        $config = $this->createConfig([
             'foo' => 'bar',
-            'foo.bar' => 'foo-bar',
-            'foobar' => [
-                'bar.baz' => 'foo-bar-baz',
-            ],
-            'bar' => 'baz',
-            'baz' => 'bat',
-            'associate' => [
-                'x' => 'xxx',
-                'y' => 'yyy',
-            ],
-            'x' => [
-                'z' => 'zoo',
+        ]);
+
+        self::assertSame('bar', $config->get('foo'));
+    }
+
+    public function testGetExistingWithDefault(): void
+    {
+        $config = $this->createConfig([
+            'exist' => 'exist',
+        ]);
+
+        self::assertSame('exist', $config->get('exist', 'default'));
+    }
+
+    public function testGetNonExistingWithDefault(): void
+    {
+        $config = $this->createConfig();
+
+        self::assertSame('default', $config->get('not-exist', 'default'));
+    }
+
+    public function testHasIsFalse(): void
+    {
+        $config = $this->createConfig();
+
+        self::assertFalse($config->has('not-exist'));
+        self::assertFalse($config->has('foo.not-exist'));
+    }
+
+    public function testHasIsTrue(): void
+    {
+        $config = $this->createConfig([
+            'foo' => 'bar',
+        ]);
+
+        self::assertTrue($config->has('foo'));
+    }
+
+    public function testInstantiable(): void
+    {
+        $config = $this->createConfig();
+
+        self::assertInstanceOf(Config::class, $config);
+        self::assertInstanceOf(ConfigInterface::class, $config);
+    }
+
+    public function testIsEmpty(): void
+    {
+        $config = $this->createConfig();
+
+        self::assertEmpty($config->toArray());
+        self::assertNull($config->get('nested.non-existent'));
+    }
+
+    public function testItCanBeReturnedAsAnArray(): void
+    {
+        $expected = [
+            'foo' => 'foo',
+            'bar' => [
+                'baz' => 'barbaz',
             ],
         ];
 
-        $this->setUpConfig($this->configuration);
+        $config = new Config($expected);
+
+        self::assertSame($expected, $config->toArray());
+    }
+
+    public function testItCanSetAndRetrieveAClosure(): void
+    {
+        $config = $this->createConfig();
+
+        $config->set('all-caps', static fn (string $foo): string => mb_strtoupper($foo));
+
+        /** @var ?callable $callable */
+        $callable = $config->get('all-caps');
+
+        self::assertIsCallable($callable);
+        self::assertInstanceOf(Closure::class, $callable);
+        self::assertSame('STRING', $callable('string'));
+    }
+
+    public function testItCanSplitIntoASubObject(): void
+    {
+        $config = new Config([
+            'foo' => 'foo1',
+            'bar' => [
+                'baz' => 'barBaz',
+            ],
+        ]);
+
+        //        $bar = $config->wrap('bar');
+
+        self::assertSame('barBaz', $config->get('bar.baz'));
+        //        self::assertNull($bar->get('foo'));
+    }
+
+    public function testItCanUnsetAnOption(): void
+    {
+        $config = $this->createConfig([
+            'foo' => [
+                'bar' => 'foobar',
+                'baz' => 'foobaz',
+            ],
+            'bar' => 'bar',
+        ]);
+
+        $config->remove('foo.baz');
+        $config->remove('bar');
+
+        self::assertTrue($config->has('foo.bar'));
+        self::assertFalse($config->has('foo.baz'));
+        self::assertFalse($config->has('bar'));
     }
 
     /**
-     * @param array<array-key,mixed> $options
+     * @param class-string<Throwable> $exception
      */
-    public function setUpConfig(array $options = []): Config
+    #[DataProvider('invalidPaths')]
+    public function testRequireInvalidPaths(string $path, string $key, string $exception): void
     {
-        return $this->config = new Config($options);
+        $this->expectException(ConfigExceptionInterface::class);
+
+        $this->expectException($exception);
+
+        $this->expectExceptionMessage($path);
+
+        Config::new($path, $key);
+    }
+
+    #[DataProvider('validPaths')]
+    public function testRequirePath(string $path, string $key): void
+    {
+        $config = Config::new($path, $key);
+
+        self::assertTrue($config->has($key));
+
+        self::assertFileExists($path);
+
+        if (is_file($path)) {
+            /** @var array $options */
+            $options = require $path;
+
+            self::assertSame($options, $config->get($key));
+        }
+    }
+
+    public function testReturnsDefaultConfigOptionValueIfConfigOptionDoesNotExist(): void
+    {
+        $config = $this->createConfig();
+
+        self::assertNull($config->get('does-not-exist'));
+        self::assertTrue($config->get('does-not-exist', true));
+        self::assertFalse($config->get('does-not-exist', false));
+        self::assertInstanceOf(stdClass::class, $config->get('does-not-exist', new stdClass()));
+    }
+
+    public function testReturnsFalseIfKeyDoesNotExist(): void
+    {
+        $config = $this->createConfig();
+
+        self::assertFalse($config->has('does-not-exist'));
+    }
+
+    public function testReturnsNullIfConfigOptionDoesNotExist(): void
+    {
+        $config = $this->createConfig();
+
+        self::assertNull($config->get('does-not-exist'));
+    }
+
+    public function testReturnsTrueIfHas(): void
+    {
+        $config = new Config([
+            'has' => 'some-item',
+        ]);
+
+        self::assertTrue($config->has('has'));
+    }
+
+    public function testReturnsTrueIfKeyExist(): void
+    {
+        $config = new Config([
+            'foo' => [
+                'bar' => 'foobar',
+            ],
+        ]);
+
+        self::assertTrue($config->has('foo.bar'));
+    }
+
+    public function testReturnsTrueIfKeyIsBooleanFalse(): void
+    {
+        $config = new Config([
+            'false' => false,
+        ]);
+
+        self::assertTrue($config->has('false'));
+    }
+
+    public function testSet(): void
+    {
+        $config = $this->createConfig();
+        $config->set('key', 'value');
+        self::assertSame('value', $config->get('key'));
+    }
+
+    public function testToArray(): void
+    {
+        $configurations = [
+            'foo' => 'bar',
+        ];
+
+        $config = new Config($configurations);
+
+        self::assertSame($configurations, $config->toArray());
+    }
+
+    public static function fixture(string $path): string
+    {
+        $realpath = realpath(sprintf('%s/Fixture/config.%s.php', dirname(__DIR__, 1), mb_strtolower($path)));
+
+        if ($realpath === false) {
+            throw new ConfigFileNotFoundException($path);
+        }
+
+        return $realpath;
+    }
+
+    public static function invalidPaths(): Generator
+    {
+        yield 'invalid-file-contents' => [
+            tempnam(sys_get_temp_dir(), 'invalid-key'),
+            'not-an-array',
+            InvalidConfigFileException::class,
+        ];
+        yield 'invalid-file-path' => ['invalid/file/path', 'not-a-file', ConfigFileNotFoundException::class];
     }
 
     /**
@@ -107,504 +414,33 @@ final class ConfigTest extends TestCase
             ]];
     }
 
-    public function testAdd(): void
+    /**
+     * @return Generator<string,array<array-key,array>>
+     */
+    public static function validOptions(): Generator
     {
-        $expected = [
-            ...$this->config->toArray(),
-            'key' => 'value',
+        yield from [
+            'empty' => [[]],
+            'string' => [[
+                'string-key' => 'string-value',
+            ]],
+            'null' => [[
+                'null' => null,
+            ]],
+            'closure' => [[
+                'closure' => static fn (): string => 'closure',
+            ]],
         ];
-
-        $this->config->set('key', 'value');
-
-        Assert::assertSame($expected, $this->config->toArray());
-        Assert::assertTrue($this->config->has('key'));
-        Assert::assertSame('value', $this->config->get('key'));
     }
 
-    public function testAddAndGetUsingDotNotation(): void
+    /**
+     * @return Generator<string,array<string>>
+     */
+    public static function validPaths(): Generator
     {
-        $this->setUpConfig([
-            'app' => 'key',
-        ]);
-        $this->config->set('foo.bar.baz', 'foo-bar-baz');
-
-        Assert::assertSame([
-            'app' => 'key',
-            'foo' => [
-                'bar' => [
-                    'baz' => 'foo-bar-baz',
-                ],
-            ],
-        ], $this->config->toArray());
-        Assert::assertSame([
-            'bar' => [
-                'baz' => 'foo-bar-baz',
-            ],
-        ], $this->config->get('foo'));
-        Assert::assertSame([
-            'baz' => 'foo-bar-baz',
-        ], $this->config->get('foo.bar'));
-        Assert::assertSame('foo-bar-baz', $this->config->get('foo.bar.baz'));
-    }
-
-    public function testAddArray(): void
-    {
-        $this->config->merge([
-            'key1' => 'value1',
-            'key2' => 'value2',
-        ]);
-        Assert::assertSame('value1', $this->config->get('key1'));
-        Assert::assertSame('value2', $this->config->get('key2'));
-    }
-
-    #[DataProvider('setValidOptionProvider')]
-    public function testAddValidOption(string $key, mixed $value): void
-    {
-        $config = new Config();
-
-        $config->set($key, $value);
-
-        /** @var null|mixed $actual */
-        $actual = $config->get($key);
-
-        Assert::assertSame($value, $actual);
-
-        if (is_callable($value)) {
-            /** @var callable $actual */
-            Assert::assertSame($value(), $actual());
-        }
-
-        Assert::assertSame([
-            $key => $value,
-        ], $config->toArray());
-
-        if (! is_iterable($value)) {
-            return;
-        }
-
-        $expectedCount = $value instanceof Traversable
-            ? iterator_count($value)
-            : count($value);
-        /** @var iterable $actual */
-        Assert::assertCount($expectedCount, $actual);
-    }
-
-    public function testAppend(): void
-    {
-        $this->config->append('array', 'xxx');
-        Assert::assertSame('xxx', $this->config->get('array.2'));
-    }
-
-    public function testAppendingToANonArrayItem(): void
-    {
-        $config = new Config([
-            'foo' => 'bar',
-        ]);
-
-        $config->append('foo', 'baz');
-
-        Assert::assertSame([
-            'foo' => ['bar', 'baz'],
-        ], $config->toArray());
-    }
-
-    public function testAppendWithNewKey(): void
-    {
-        $this->config->append('new-array-key', 'xxx');
-        Assert::assertSame(['xxx'], $this->config->get('new-array-key'));
-    }
-
-    public function testGet(): void
-    {
-        Assert::assertSame('bar', $this->config->get('foo'));
-    }
-
-    public function testGetWithDefault(): void
-    {
-        Assert::assertSame('default', $this->config->get('not-exist', 'default'));
-    }
-
-    public function testHasIsFalse(): void
-    {
-        Assert::assertFalse($this->config->has('not-exist'));
-        Assert::assertFalse($this->config->has('foo.not-exist'));
-    }
-
-    public function testHasIsTrue(): void
-    {
-        Assert::assertTrue($this->config->has('foo'));
-    }
-
-    public function testInstantiable(): void
-    {
-        Assert::assertInstanceOf(Config::class, $this->config);
-        Assert::assertInstanceOf(ConfigInterface::class, $this->config);
-    }
-
-    public function testIsEmpty(): void
-    {
-        Assert::assertEmpty(new Config());
-        Assert::assertNull((new Config())->get('nested.non-existent'));
-    }
-
-    public function testItCanAppendValuesToAnArrayItem(): void
-    {
-        $config = new Config([
-            'app' => [
-                'vars' => ['foo', 'bar'],
-            ],
-        ]);
-
-        $config->append('app.vars', 'baz');
-
-        Assert::assertSame(['foo', 'bar', 'baz'], $config->get('app.vars'));
-
-        $config->append('app.vars', ['qux', 'quux']);
-
-        Assert::assertSame(['foo', 'bar', 'baz', 'qux', 'quux'], $config->get('app.vars'));
-    }
-
-    public function testItCanBeHandledLikeAnArray(): void
-    {
-        $config = new Config([
-            'foo' => 'foo',
-            'bar' => 'bar',
-        ]);
-        $config['baz'] = 'baz';
-
-        Assert::assertSame('bar', $config['bar']);
-        unset($config['bar']);
-        Assert::assertArrayNotHasKey('bar', $config);
-        Assert::assertNull($config['bar']);
-
-        Assert::assertArrayHasKey('foo', $config);
-        Assert::assertSame('foo', $config['foo']);
-        Assert::assertSame('baz', $config['baz']);
-    }
-
-    public function testItCanBeReturnedAsAnArray(): void
-    {
-        $config = new Config([
-            'foo' => 'foo',
-            'bar' => [
-                'baz' => 'barbaz',
-            ],
-        ]);
-
-        Assert::assertSame([
-            'foo' => 'foo',
-            'bar' => [
-                'baz' => 'barbaz',
-            ],
-        ], $config->toArray());
-    }
-
-    public function testItCanJoinArray(): void
-    {
-        $this->setUpConfig([
-            'foo' => 'foo',
-            'baz' => 'baz',
-        ]);
-
-        $config = new Config([
-            'bar' => 'rab',
-            'baz' => 'zab',
-        ]);
-
-        $this->config->join($config->toArray());
-
-        Assert::assertSame('foo', $this->config->get('foo'));
-        Assert::assertSame('rab', $this->config->get('bar'));
-        Assert::assertSame('zab', $this->config->get('baz'));
-
-        Assert::assertSame([
-            'foo' => 'foo',
-            'baz' => 'zab',
-            'bar' => 'rab',
-        ], $this->config->toArray());
-
-        $configFactory = new ConfigFactory();
-        $config = $configFactory->create([]);
-
-        Assert::assertSame([], $config->toArray());
-
-        $config = $configFactory->createFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
-
-        Assert::assertSame([
-            'config' => [
-                'type' => 'local',
-                'local' => [
-                    'foo' => 'baz',
-                ],
-            ],
-        ], $config->toArray());
-
-        $config->join($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
-
-        Assert::assertSame([
-            'config' => [
-                'type' => 'testing',
-                'local' => [
-                    'foo' => 'baz',
-                ],
-                'testing' => [
-                    'foo' => 'bar',
-                ],
-            ],
-        ], $config->toArray());
-    }
-
-    public function testItCanMergeAConfigObjectWithoutOverridingExistingValues(): void
-    {
-        $config = new Config([
-            'foo' => 'foo',
-            'baz' => 'baz',
-        ]);
-
-        $gifnoc = new Config([
-            'bar' => 'rab',
-            'baz' => 'zab',
-        ]);
-
-        $config->merge($gifnoc->toArray());
-
-        Assert::assertSame('foo', $config->get('foo'));
-        Assert::assertSame('rab', $config->get('bar'));
-        Assert::assertSame('baz', $config->get('baz'));
-    }
-
-    public function testItCanPrependValuesToAnArrayItem(): void
-    {
-        $config = new Config([
-            'app' => [
-                'vars' => ['foo', 'bar'],
-            ],
-        ]);
-
-        $config->prepend('app.vars', 'baz');
-
-        Assert::assertSame(['baz', 'foo', 'bar'], $config->get('app.vars'));
-
-        $config->prepend('app.vars', ['qux', 'quux']);
-
-        Assert::assertSame(['qux', 'quux', 'baz', 'foo', 'bar'], $config->get('app.vars'));
-    }
-
-    public function testItCanSetAndRetrieveAClosure(): void
-    {
-        $this->config->set('all-caps', static fn (string $foo): string => mb_strtoupper($foo));
-
-        /** @var ?callable $callable */
-        $callable = $this->config->get('all-caps');
-
-        Assert::assertIsCallable($callable);
-        Assert::assertInstanceOf(Closure::class, $callable);
-        Assert::assertSame('STRING', $callable('string'));
-    }
-
-    public function testItCanSplitIntoASubObject(): void
-    {
-        $config = new Config([
-            'foo' => 'foo1',
-            'bar' => [
-                'baz' => 'barbaz',
-            ],
-        ]);
-
-        $bar = $config->wrap('bar');
-
-        Assert::assertSame('barbaz', $bar->get('bar.baz'));
-        Assert::assertNull($bar->get('foo'));
-    }
-
-    public function testItCanUnsetAnOption(): void
-    {
-        $this->setUpConfig([
-            'foo' => [
-                'bar' => 'foobar',
-                'baz' => 'foobaz',
-            ],
-        ]);
-
-        $this->config->remove('foo.baz');
-        $this->config->remove('foo.qux');
-
-        Assert::assertTrue($this->config->has('foo.bar'));
-        Assert::assertFalse($this->config->has('foo.baz'));
-    }
-
-    public function testMergeFromPathWithoutOverridingExistingValues(): void
-    {
-        $configFactory = new ConfigFactory();
-        $config = $configFactory->create([]);
-
-        Assert::assertSame([], $config->toArray());
-
-        $config = $configFactory->createFromPath(dirname(__DIR__) . '/Fixture/config.local.php', 'config');
-
-        Assert::assertSame([
-            'config' => [
-                'type' => 'local',
-                'local' => [
-                    'foo' => 'baz',
-                ],
-            ],
-        ], $config->toArray());
-
-        Assert::assertSame(1, $config->count());
-
-        $config->merge($configFactory->createFromPath($this->fixture('testing'))->toArray(), 'config');
-
-        Assert::assertSame([
-            'config' => [
-                'type' => 'local',
-                'testing' => [
-                    'foo' => 'bar',
-                ],
-                'local' => [
-                    'foo' => 'baz',
-                ],
-            ],
-        ], $config->toArray());
-
-        Assert::assertCount(1, $config);
-    }
-
-    public function testOffsetExists(): void
-    {
-        Assert::assertArrayHasKey('foo', $this->config);
-        Assert::assertArrayNotHasKey('not-exist', $this->config);
-    }
-
-    public function testOffsetGet(): void
-    {
-        Assert::assertNull($this->config['not-exist']);
-        Assert::assertSame('bar', $this->config['foo']);
-        Assert::assertSame([
-            'x' => 'xxx',
-            'y' => 'yyy',
-        ], $this->config['associate']);
-    }
-
-    public function testOffsetSet(): void
-    {
-        Assert::assertArrayNotHasKey('key', $this->config);
-
-        Assert::assertNull($this->config['key']);
-
-        $this->config['key'] = 'value';
-
-        Assert::assertArrayHasKey('key', $this->config);
-
-        Assert::assertNotNull($this->config['key']);
-
-        Assert::assertSame('value', $this->config['key']);
-    }
-
-    public function testOffsetUnset(): void
-    {
-        Assert::assertArrayHasKey('associate', $this->config->toArray());
-        Assert::assertSame($this->config['associate'], $this->config->get('associate'));
-
-        unset($this->config['associate']);
-
-        Assert::assertArrayNotHasKey('associate', $this->config->toArray());
-        Assert::assertNull($this->config->get('associate'));
-    }
-
-    public function testPrepend(): void
-    {
-        $this->config->prepend('array', 'xxx');
-        Assert::assertSame('xxx', $this->config->get('array.0'));
-    }
-
-    public function testPrependingToANonArrayItem(): void
-    {
-        $config = new Config([
-            'foo' => 'bar',
-        ]);
-
-        $config->prepend('foo', 'baz');
-        Assert::assertSame([
-            'foo' => ['baz', 'bar'],
-        ], $config->toArray());
-    }
-
-    public function testPrependWithNewKey(): void
-    {
-        $this->config->prepend('new_key', 'xxx');
-        Assert::assertSame(['xxx'], $this->config->get('new_key'));
-    }
-
-    public function testReturnsDefaultConfigOptionValueIfConfigOptionDoesNotExist(): void
-    {
-        Assert::assertNull($this->config->get('does-not-exist'));
-        Assert::assertTrue($this->config->get('does-not-exist', true));
-        Assert::assertFalse($this->config->get('does-not-exist', false));
-        Assert::assertInstanceOf(stdClass::class, $this->config->get('does-not-exist', new stdClass()));
-    }
-
-    public function testReturnsFalseIfKeyDoesNotExist(): void
-    {
-        Assert::assertFalse($this->config->has('does-not-exist'));
-    }
-
-    public function testReturnsNullIfConfigOptionDoesNotExist(): void
-    {
-        Assert::assertNull($this->config->get('does-not-exist'));
-    }
-
-    public function testReturnsTrueIfHas(): void
-    {
-        $this->config = new Config([
-            'has' => 'some-item',
-        ]);
-
-        Assert::assertTrue($this->config->has('has'));
-    }
-
-    public function testReturnsTrueIfKeyExist(): void
-    {
-        $config = new Config([
-            'foo' => [
-                'bar' => 'foobar',
-            ],
-        ]);
-
-        Assert::assertTrue($config->has('foo.bar'));
-    }
-
-    public function testReturnsTrueIfKeyIsBooleanFalse(): void
-    {
-        $this->config = new Config([
-            'false' => false,
-        ]);
-
-        Assert::assertTrue($this->config->has('false'));
-    }
-
-    public function testSet(): void
-    {
-        $this->config->set('key', 'value');
-        Assert::assertSame('value', $this->config->get('key'));
-    }
-
-    public function testToArray(): void
-    {
-        Assert::assertSame($this->configuration, $this->config->toArray());
-    }
-
-    public function testWrap(): void
-    {
-        $config = new Config([
-            'foo' => 'bar',
-            'foobar' => ['foo', 'baz'],
-        ]);
-        Assert::assertSame([
-            'foo' => 'bar',
-        ], $config->wrap('foo')  ->toArray());
-        Assert::assertSame([
-            'foobar' => ['foo', 'baz'],
-        ], $config->wrap('foobar')  ->toArray());
+        yield from [
+            'local' => [self::fixture('local'), 'local-key'],
+            'testing' => [self::fixture('testing'), 'testing-key'],
+        ];
     }
 }
