@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace Ghostwriter\Config;
 
-use function array_merge;
+use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
+use Ghostwriter\Config\Exception\InvalidConfigFileException;
+use Ghostwriter\Config\Interface\ConfigInterface;
+use function array_key_exists;
+use function array_pop;
 use function array_shift;
 use function explode;
+use function is_array;
+use function is_file;
 use function str_contains;
 
 final class Config implements ConfigInterface
@@ -14,9 +20,9 @@ final class Config implements ConfigInterface
     /**
      * Create a new configuration.
      *
-     * @template TValue
+     * @template TOption
      *
-     * @param array<string,TValue>|non-empty-array<string,TValue> $options
+     * @param array<string,TOption> $options
      */
     public function __construct(
         private array $options = []
@@ -24,33 +30,12 @@ final class Config implements ConfigInterface
     }
 
     /**
-     * @template TAppend
-     * @template TAppendValue
-     *
-     * @param TAppendValue $value
-     */
-    public function append(string $key, mixed $value): void
-    {
-        $current = $this->get($key, []);
-
-        $this->set($key, array_merge((array) $current, (array) $value));
-    }
-
-    /**
-     * @return int<0, max>
-     */
-    public function count(): int
-    {
-        return count($this->options);
-    }
-
-    /**
      * @template TGet
-     * @template TGetDefault
+     * @template TDefault
      *
-     * @param TGetDefault $default
+     * @param TDefault $default
      *
-     * @return TGet|TGetDefault
+     * @return TDefault|TGet
      */
     public function get(string $key, mixed $default = null): mixed
     {
@@ -58,11 +43,10 @@ final class Config implements ConfigInterface
             return $this->options[$key];
         }
 
-        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $options = &$this->options;
         foreach (explode('.', $key) as $index) {
             if (! is_array($options) || ! array_key_exists($index, $options)) {
-                /** @var TGetDefault $options */
+                /** @var TDefault $options */
                 return $default;
             }
 
@@ -70,14 +54,12 @@ final class Config implements ConfigInterface
             $options = &$options[$index];
         }
 
-        /** @var TGet|TGetDefault $options */
+        /** @var TDefault|TGet $options */
         return $options ?? $default;
     }
 
     /**
      * @template THas
-     *
-     * @psalm-assert true isset($this[$key])
      */
     public function has(string $key): bool
     {
@@ -85,7 +67,6 @@ final class Config implements ConfigInterface
             return array_key_exists($key, $this->options);
         }
 
-        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $options = &$this->options;
 
         foreach (explode('.', $key) as $index) {
@@ -101,85 +82,6 @@ final class Config implements ConfigInterface
     }
 
     /**
-     * Merge the given configuration; overriding existing values.
-     *
-     * @template TJoin
-     *
-     * @param array<string,TJoin>|non-empty-array<string,TJoin> $options
-     */
-    public function join(array $options, ?string $key = null): void
-    {
-        if ($key === null) {
-            $this->options = array_merge($this->options, $options);
-
-            return;
-        }
-
-        /** @var non-empty-array<string,TJoin> $current */
-        $value = array_merge($this->get($key, []), $options);
-
-        $this->set($key, $value);
-    }
-
-    /**
-     * Merge the given configuration options without overriding existing values.
-     *
-     * @template TMerge
-     *
-     * @param array<string,TMerge>|non-empty-array<string,TMerge> $options
-     */
-    public function merge(array $options, ?string $key = null): void
-    {
-        if ($key === null) {
-            $this->options = array_merge($options, $this->options);
-
-            return;
-        }
-
-        /** @var non-empty-array<string,TMerge> $current */
-        $value = array_merge($options, $this->get($key, []));
-
-        $this->set($key, $value);
-    }
-
-    public function offsetExists(mixed $offset): bool
-    {
-        /** @var string $offset */
-        return $this->has($offset);
-    }
-
-    public function offsetGet(mixed $offset): mixed
-    {
-        /** @var string $offset */
-        return $this->get($offset);
-    }
-
-    public function offsetSet(mixed $offset, mixed $value): void
-    {
-        /** @var string $offset */
-        $this->set($offset, $value);
-    }
-
-    public function offsetUnset(mixed $offset): void
-    {
-        $this->remove($offset);
-    }
-
-    /**
-     * @template TPrepend
-     * @template TPrependValue
-     *
-     * @param TPrependValue $value
-     */
-    public function prepend(string $key, mixed $value): void
-    {
-        /** @var non-empty-array<string,TPrepend> $value */
-        $value = array_merge((array) $value, (array) $this->get($key, []));
-
-        $this->set($key, $value);
-    }
-
-    /**
      * @template TRemove
      */
     public function remove(string $key): void
@@ -190,7 +92,6 @@ final class Config implements ConfigInterface
             return;
         }
 
-        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $options = &$this->options;
         $indexes = explode('.', $key);
         $key = array_pop($indexes);
@@ -206,9 +107,8 @@ final class Config implements ConfigInterface
 
     /**
      * @template TSet
-     * @template TSetValue
      *
-     * @param TSetValue $value
+     * @param TSet $value
      */
     public function set(string $key, mixed $value): void
     {
@@ -218,7 +118,6 @@ final class Config implements ConfigInterface
             return;
         }
 
-        /** @psalm-suppress UnsupportedPropertyReferenceUsage */
         $options = &$this->options;
 
         $indexes = explode('.', $key);
@@ -231,20 +130,40 @@ final class Config implements ConfigInterface
         $options = $value;
     }
 
-    /**
-     * @template TArray
-     *
-     * @return array<string,TArray>|non-empty-array<string,TArray>
-     */
     public function toArray(): array
     {
         return $this->options;
     }
 
-    public function wrap(string $key): self
+    /**
+     * Create a new configuration.
+     *
+     * @template TNew
+     *
+     * @throws ConfigFileNotFoundException
+     * @throws InvalidConfigFileException
+     */
+    public static function fromPath(string $path, ?string $key = null): self
     {
-        return new self([
-            $key => $this->get($key),
-        ]);
+        if (! is_file($path)) {
+            throw new ConfigFileNotFoundException($path);
+        }
+
+        /** @var array<string,TNew>|TNew $options */
+        $options = require $path;
+
+        if (! is_array($options)) {
+            throw new InvalidConfigFileException($path);
+        }
+
+        if ($key !== null) {
+            /** @var array<string,TNew> $options */
+            $options = [
+                $key => $options,
+            ];
+        }
+
+        /** @var array<string,TNew> $options */
+        return new self($options);
     }
 }
