@@ -27,10 +27,5 @@ interface ConfigInterface
      */
     public function set(string $key, mixed $value): void;
 
-    /**
-     * @template TValue
-     *
-     * @return array<string,TValue>
-     */
     public function toArray(): array;
 }
