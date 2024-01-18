@@ -10,7 +10,6 @@
 
 Provides an object that maps configuration keys to values.
 
-
 ## Installation
 
 You can install the package via composer:
@@ -19,11 +18,13 @@ You can install the package via composer:
 composer require ghostwriter/config
 ```
 
+### Star ⭐️ this repo if you find it useful
+
+You can also star (🌟) this repo to find it easier later.
+
 ## Usage
 
 ```php
-$configFactory = new ConfigFactory();
-
 $key = 'nested';
 $path = 'path/to/config.php';
 $options = [
@@ -35,10 +36,10 @@ $options = [
 $config = $configFactory->create($options);
 $config->toArray(); // ['settings' => ['enable'=>true]]
 
-$config = $configFactory->createFromPath($path);
+$config = Config::fromPath($path);
 $config->toArray(); // ['settings' => ['enable'=>true]]
 
-$config = $configFactory->createFromPath($path, $key);
+$config = Config::fromPath($path, $key);
 $config->toArray(); // ['nested' => ['settings' => ['enable'=>true]]]
 
 //
