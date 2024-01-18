@@ -44,7 +44,7 @@ final class ConfigTest extends TestCase
      */
     public function createConfig(array $options = []): Config
     {
-        return new Config($options);
+        return Config::new($options);
     }
 
     public function testAdd(): void
