@@ -1,61 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.15.0@5c774aca4746caf3d239d9c8cadb9f882ca29352">
+<files psalm-version="5.18.0@b113f3ed0259fd6e212d87c3df80eec95a6abf19">
   <file src="src/Config.php">
+    <DocblockTypeContradiction>
+      <code>throw new InvalidConfigException()</code>
+    </DocblockTypeContradiction>
+    <InvalidPropertyAssignmentValue>
+      <code><![CDATA[$this->options]]></code>
+    </InvalidPropertyAssignmentValue>
+    <InvalidReturnStatement>
+      <code>$options ?? $default</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType>
+      <code>TGetDefault|TValue</code>
+    </InvalidReturnType>
+    <MissingThrowsDocblock>
+      <code>throw new ConfigFileNotFoundException($path);</code>
+      <code>throw new InvalidConfigFileException($path);</code>
+    </MissingThrowsDocblock>
     <PossiblyUnusedMethod>
-      <code>count</code>
+      <code>from</code>
+      <code>fromPath</code>
     </PossiblyUnusedMethod>
-    <RedundantCastGivenDocblockType>
-      <code>(array) $current</code>
-      <code><![CDATA[(array) $this->get($key, [])]]></code>
-    </RedundantCastGivenDocblockType>
+    <UndefinedDocblockClass>
+      <code><![CDATA[$options = &$options[$index];]]></code>
+    </UndefinedDocblockClass>
   </file>
   <file src="src/ConfigFactory.php">
-    <UnusedClass>
-      <code>ConfigFactory</code>
-    </UnusedClass>
+    <MissingThrowsDocblock>
+      <code>throw new ConfigFileNotFoundException($path);</code>
+      <code>throw new InvalidConfigFileException($path);</code>
+    </MissingThrowsDocblock>
   </file>
   <file src="src/ConfigInterface.php">
-    <PossiblyUnusedMethod>
-      <code>append</code>
-      <code>join</code>
-      <code>merge</code>
-      <code>prepend</code>
-      <code>toArray</code>
-      <code>wrap</code>
-    </PossiblyUnusedMethod>
-  </file>
-  <file src="src/FactoryInterface.php">
-    <PossiblyUnusedMethod>
-      <code>create</code>
-      <code>createFromPath</code>
-    </PossiblyUnusedMethod>
+    <InvalidDocblock>
+      <code>interface ConfigInterface</code>
+    </InvalidDocblock>
   </file>
   <file src="tests/Unit/ConfigFactoryTest.php">
-    <UndefinedClass>
-      <code>TestCase</code>
-    </UndefinedClass>
-    <UnusedParam>
-      <code>$exception</code>
-      <code>$key</code>
-      <code>$key</code>
-      <code>$options</code>
-      <code>$path</code>
-      <code>$path</code>
-    </UnusedParam>
+    <InvalidReturnType>
+      <code><![CDATA[Generator<string, array<string>>]]></code>
+    </InvalidReturnType>
+    <UnresolvableInclude>
+      <code>require $path</code>
+    </UnresolvableInclude>
   </file>
   <file src="tests/Unit/ConfigTest.php">
-    <UndefinedClass>
-      <code>TestCase</code>
-    </UndefinedClass>
-    <UnusedParam>
-      <code>$key</code>
-      <code>$options</code>
-      <code>$value</code>
-    </UnusedParam>
+    <PropertyNotSetInConstructor>
+      <code>$config</code>
+    </PropertyNotSetInConstructor>
   </file>
   <file src="tests/Unit/Traits/FixtureTrait.php">
-    <PossiblyUnusedParam>
-      <code>$path</code>
-    </PossiblyUnusedParam>
+    <MissingThrowsDocblock>
+      <code>throw new ConfigFileNotFoundException($path);</code>
+    </MissingThrowsDocblock>
   </file>
 </files>
