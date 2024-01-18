@@ -30,6 +30,16 @@ final class Config implements ConfigInterface
     }
 
     /**
+     * @template TNew
+     *
+     * @param array<string,TNew> $options
+     */
+    public static function new(array $options): self
+    {
+        return new self($options);
+    }
+
+    /**
      * @template TGet
      * @template TDefault
      *
@@ -138,7 +148,7 @@ final class Config implements ConfigInterface
     /**
      * Create a new configuration.
      *
-     * @template TNew
+     * @template TFromPath
      *
      * @throws ConfigFileNotFoundException
      * @throws InvalidConfigFileException
@@ -149,7 +159,7 @@ final class Config implements ConfigInterface
             throw new ConfigFileNotFoundException($path);
         }
 
-        /** @var array<string,TNew>|TNew $options */
+        /** @var array<string,TFromPath>|TFromPath $options */
         $options = require $path;
 
         if (! is_array($options)) {
@@ -157,13 +167,13 @@ final class Config implements ConfigInterface
         }
 
         if ($key !== null) {
-            /** @var array<string,TNew> $options */
+            /** @var array<string,TFromPath> $options */
             $options = [
                 $key => $options,
             ];
         }
 
-        /** @var array<string,TNew> $options */
+        /** @var array<string,TFromPath> $options */
         return new self($options);
     }
 }
