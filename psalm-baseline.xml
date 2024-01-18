@@ -1,57 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.18.0@b113f3ed0259fd6e212d87c3df80eec95a6abf19">
+<files psalm-version="5.20.0@3f284e96c9d9be6fe6b15c79416e1d1903dcfef4">
   <file src="src/Config.php">
-    <DocblockTypeContradiction>
-      <code>throw new InvalidConfigException()</code>
-    </DocblockTypeContradiction>
-    <InvalidPropertyAssignmentValue>
-      <code><![CDATA[$this->options]]></code>
-    </InvalidPropertyAssignmentValue>
-    <InvalidReturnStatement>
-      <code>$options ?? $default</code>
-    </InvalidReturnStatement>
-    <InvalidReturnType>
-      <code>TGetDefault|TValue</code>
-    </InvalidReturnType>
-    <MissingThrowsDocblock>
-      <code>throw new ConfigFileNotFoundException($path);</code>
-      <code>throw new InvalidConfigFileException($path);</code>
-    </MissingThrowsDocblock>
-    <PossiblyUnusedMethod>
-      <code>from</code>
-      <code>fromPath</code>
-    </PossiblyUnusedMethod>
-    <UndefinedDocblockClass>
-      <code><![CDATA[$options = &$options[$index];]]></code>
-    </UndefinedDocblockClass>
-  </file>
-  <file src="src/ConfigFactory.php">
-    <MissingThrowsDocblock>
-      <code>throw new ConfigFileNotFoundException($path);</code>
-      <code>throw new InvalidConfigFileException($path);</code>
-    </MissingThrowsDocblock>
-  </file>
-  <file src="src/ConfigInterface.php">
-    <InvalidDocblock>
-      <code>interface ConfigInterface</code>
-    </InvalidDocblock>
-  </file>
-  <file src="tests/Unit/ConfigFactoryTest.php">
-    <InvalidReturnType>
-      <code><![CDATA[Generator<string, array<string>>]]></code>
-    </InvalidReturnType>
-    <UnresolvableInclude>
-      <code>require $path</code>
-    </UnresolvableInclude>
-  </file>
-  <file src="tests/Unit/ConfigTest.php">
-    <PropertyNotSetInConstructor>
-      <code>$config</code>
-    </PropertyNotSetInConstructor>
-  </file>
-  <file src="tests/Unit/Traits/FixtureTrait.php">
-    <MissingThrowsDocblock>
-      <code>throw new ConfigFileNotFoundException($path);</code>
-    </MissingThrowsDocblock>
+    <UnsupportedPropertyReferenceUsage>
+      <code><![CDATA[$options = &$this->options]]></code>
+      <code><![CDATA[$options = &$this->options]]></code>
+      <code><![CDATA[$options = &$this->options]]></code>
+      <code><![CDATA[$options = &$this->options]]></code>
+    </UnsupportedPropertyReferenceUsage>
   </file>
 </files>
