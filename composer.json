@@ -30,7 +30,7 @@
         }
     ],
     "require": {
-        "php": ">=8.1"
+        "php": "^8.3"
     },
     "require-dev": {
         "ghostwriter/coding-standard": "dev-main",
@@ -43,13 +43,15 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Ghostwriter\\Config\\Tests\\": "tests/"
+            "Ghostwriter\\ConfigTests\\": "tests/"
         }
     },
     "config": {
-        "platform": {
-            "php": "8.1.999"
-        }
+        "discard-changes": true,
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "prepend-autoloader": true,
+        "sort-packages": true
     },
     "scripts": {
         "cache:clear": [
