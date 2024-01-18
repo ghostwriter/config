@@ -49,7 +49,7 @@ final class ConfigTest extends TestCase
 
     public function testAdd(): void
     {
-        $config = Config::new(self::fixture('dev'));
+        $config = Config::fromPath(self::fixture('dev'));
 
         $expected = [
             ...$config->toArray(),
@@ -270,13 +270,13 @@ final class ConfigTest extends TestCase
 
         $this->expectExceptionMessage($path);
 
-        Config::new($path, $key);
+        Config::fromPath($path, $key);
     }
 
     #[DataProvider('validPaths')]
     public function testRequirePath(string $path, string $key): void
     {
-        $config = Config::new($path, $key);
+        $config = Config::fromPath($path, $key);
 
         self::assertTrue($config->has($key));
 
