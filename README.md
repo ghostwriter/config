@@ -41,6 +41,7 @@ $config->toArray(); // ['settings' => ['enable'=>true]]
 
 $config = Config::fromPath($path, $key);
 $config->toArray(); // ['nested' => ['settings' => ['enable'=>true]]]
+$config->has('nested.settings.disabled'); // true
 
 //
 
@@ -49,43 +50,33 @@ $config->has('settings'); // true
 $config->has('settings.enable'); // true
 $config->get('settings.enable'); // true
 
+$config = Config::new($options);
 $config->has('settings.disabled'); // false
 $config->get('settings.disabled'); // null
 $config->get('settings.disabled', 'default'); // 'default'
 
 $config->set('settings.disabled', false); // true
 $config->has('settings.disabled'); // true
+
 $config->get('settings.disabled'); // false
 
 $config->toArray(); // ['settings' => ['enable'=>true,'disabled'=>false]]
+
+$config->remove('settings.disabled');
+
+$config->get('settings.disabled'); // null
+
+$config->toArray(); // ['settings' => ['enable'=>true]]
 ```
 
 ## API
 
 ```php
-// API
-// ConfigFactory
-interface ConfigFactoryInterface
+interface ConfigInterface
 {
-    public function create(array $options = []): ConfigInterface;
-
-    public function createFromPath(string $path, ?string $key = null): ConfigInterface;
-}
-// Config
-/** @extends ArrayAccess<array-key,mixed> */
-interface ConfigInterface extends ArrayAccess, Countable
-{
-    public function append(string $key, mixed $value): void;
-
     public function get(string $key, mixed $default = null): mixed;
 
     public function has(string $key): bool;
-
-    public function join(array $options, ?string $key = null): void;
-
-    public function merge(array $options, ?string $key = null): void;
-
-    public function prepend(string $key, mixed $value): void;
 
     public function remove(string $key): void;
 
@@ -93,8 +84,6 @@ interface ConfigInterface extends ArrayAccess, Countable
 
     /** @return array<array-key,mixed> */
     public function toArray(): array;
-
-    public function wrap(string $key): self;
 }
 ```
 
