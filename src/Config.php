@@ -30,16 +30,6 @@ final class Config implements ConfigInterface
     }
 
     /**
-     * @template TNew
-     *
-     * @param array<string,TNew> $options
-     */
-    public static function new(array $options): self
-    {
-        return new self($options);
-    }
-
-    /**
      * @template TGet
      * @template TDefault
      *
@@ -174,6 +164,16 @@ final class Config implements ConfigInterface
         }
 
         /** @var array<string,TFromPath> $options */
+        return new self($options);
+    }
+
+    /**
+     * @template TNew
+     *
+     * @param array<string,TNew> $options
+     */
+    public static function new(array $options): self
+    {
         return new self($options);
     }
 }
