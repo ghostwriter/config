@@ -8,10 +8,6 @@
       <code><![CDATA[public function set(string $key, mixed $value): void]]></code>
       <code><![CDATA[public function toArray(): array]]></code>
     </MissingOverrideAttribute>
-    <MissingThrowsDocblock>
-      <code><![CDATA[throw new ConfigFileNotFoundException($path);]]></code>
-      <code><![CDATA[throw new InvalidConfigFileException($path);]]></code>
-    </MissingThrowsDocblock>
     <UnsupportedPropertyReferenceUsage>
       <code><![CDATA[$options = &$this->options]]></code>
       <code><![CDATA[$options = &$this->options]]></code>
