@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.20.0@3f284e96c9d9be6fe6b15c79416e1d1903dcfef4">
+<files psalm-version="5.23.1@8471a896ccea3526b26d082f4461eeea467f10a4">
   <file src="src/Config.php">
+    <MissingOverrideAttribute>
+      <code><![CDATA[public function get(string $key, mixed $default = null): mixed]]></code>
+      <code><![CDATA[public function has(string $key): bool]]></code>
+      <code><![CDATA[public function remove(string $key): void]]></code>
+      <code><![CDATA[public function set(string $key, mixed $value): void]]></code>
+      <code><![CDATA[public function toArray(): array]]></code>
+    </MissingOverrideAttribute>
+    <MissingThrowsDocblock>
+      <code><![CDATA[throw new ConfigFileNotFoundException($path);]]></code>
+      <code><![CDATA[throw new InvalidConfigFileException($path);]]></code>
+    </MissingThrowsDocblock>
     <UnsupportedPropertyReferenceUsage>
       <code><![CDATA[$options = &$this->options]]></code>
       <code><![CDATA[$options = &$this->options]]></code>
       <code><![CDATA[$options = &$this->options]]></code>
       <code><![CDATA[$options = &$this->options]]></code>
     </UnsupportedPropertyReferenceUsage>
+  </file>
+  <file src="tests/Unit/ConfigTest.php">
+    <LessSpecificReturnType>
+      <code><![CDATA[bool]]></code>
+      <code><![CDATA[string]]></code>
+    </LessSpecificReturnType>
   </file>
 </files>
