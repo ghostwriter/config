@@ -7,6 +7,4 @@ namespace Ghostwriter\Config\Exception;
 use Ghostwriter\Config\Interface\ConfigExceptionInterface;
 use InvalidArgumentException;
 
-final class ConfigFileNotFoundException extends InvalidArgumentException implements ConfigExceptionInterface
-{
-}
+final class ConfigFileNotFoundException extends InvalidArgumentException implements ConfigExceptionInterface {}
