@@ -6,6 +6,4 @@ namespace Ghostwriter\Config\Interface;
 
 use Throwable;
 
-interface ConfigExceptionInterface extends Throwable
-{
-}
+interface ConfigExceptionInterface extends Throwable {}
