@@ -7,6 +7,7 @@ namespace Ghostwriter\Config;
 use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
 use Ghostwriter\Config\Exception\InvalidConfigFileException;
 use Ghostwriter\Config\Interface\ConfigInterface;
+
 use function array_key_exists;
 use function array_pop;
 use function array_shift;
@@ -26,8 +27,7 @@ final class Config implements ConfigInterface
      */
     public function __construct(
         private array $options = []
-    ) {
-    }
+    ) {}
 
     /**
      * @template TGet
