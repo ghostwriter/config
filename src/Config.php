@@ -27,7 +27,8 @@ final class Config implements ConfigInterface
      */
     public function __construct(
         private array $options = []
-    ) {}
+    ) {
+    }
 
     /**
      * @template TGet
