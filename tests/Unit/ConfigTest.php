@@ -20,6 +20,9 @@ use stdClass;
 use Throwable;
 use Traversable;
 
+use const PHP_FLOAT_MAX;
+use const PHP_INT_MAX;
+
 use function count;
 use function dirname;
 use function is_callable;
@@ -32,9 +35,6 @@ use function realpath;
 use function sprintf;
 use function sys_get_temp_dir;
 use function tempnam;
-
-use const PHP_FLOAT_MAX;
-use const PHP_INT_MAX;
 
 #[CoversClass(Config::class)]
 final class ConfigTest extends TestCase
