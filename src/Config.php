@@ -7,23 +7,27 @@ namespace Ghostwriter\Config;
 use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
 use Ghostwriter\Config\Exception\InvalidConfigFileException;
 use Ghostwriter\Config\Interface\ConfigInterface;
+use Override;
 
 use function array_key_exists;
 use function array_pop;
 use function array_shift;
+use function basename;
 use function explode;
 use function is_array;
 use function is_file;
 use function str_contains;
 
+/**
+ * @template TKey of string
+ * @template TValue
+ *
+ * @implements ConfigInterface<TKey,TValue>
+ */
 final class Config implements ConfigInterface
 {
     /**
-     * Create a new configuration.
-     *
-     * @template TOption
-     *
-     * @param array<string,TOption> $options
+     * @param array<TKey,TValue> $options
      */
     public function __construct(
         private array $options = []
@@ -31,60 +35,68 @@ final class Config implements ConfigInterface
     }
 
     /**
-     * @template TGet
+     * @template TGet of string
      * @template TDefault
      *
+     * @param TGet     $key
      * @param TDefault $default
      *
-     * @return TDefault|TGet
+     * @return TDefault|TValue
      */
+    #[Override]
     public function get(string $key, mixed $default = null): mixed
     {
         if (array_key_exists($key, $this->options)) {
+            /** @var TValue */
             return $this->options[$key];
         }
 
-        $options = &$this->options;
+        $current = $this->options;
         foreach (explode('.', $key) as $index) {
-            if (! is_array($options) || ! array_key_exists($index, $options)) {
-                /** @var TDefault $options */
+            if (! is_array($current) || ! array_key_exists($index, $current)) {
+                /** @var TDefault */
                 return $default;
             }
 
-            /** @var array<string,TGet>|TGet $options */
-            $options = &$options[$index];
+            /** @var TValue $current */
+            $current = $current[$index];
         }
 
-        /** @var TDefault|TGet $options */
-        return $options ?? $default;
+        return $current;
     }
 
     /**
-     * @template THas
+     * @template THas of string
+     *
+     * @param THas $key
      */
+    #[Override]
     public function has(string $key): bool
     {
         if (! str_contains($key, '.')) {
             return array_key_exists($key, $this->options);
         }
 
-        $options = &$this->options;
+        $options = $this->options;
 
         foreach (explode('.', $key) as $index) {
             if (! is_array($options) || ! array_key_exists($index, $options)) {
                 return false;
             }
 
-            /** @var array<string,THas>|THas $options */
-            $options = &$options[$index];
+            /** @var array<THas,TValue>|TValue $options */
+            $options = $options[$index];
         }
 
-        return true;
+        return $options !== null;
     }
 
     /**
-     * @template TRemove
+     * @template TRemove of string
+     *
+     * @param TRemove $key
      */
+    #[Override]
     public function remove(string $key): void
     {
         if (array_key_exists($key, $this->options)) {
@@ -94,84 +106,100 @@ final class Config implements ConfigInterface
         }
 
         $options = &$this->options;
+
         $indexes = explode('.', $key);
+
         $key = array_pop($indexes);
 
         while ($index = array_shift($indexes)) {
-            /** @var array<string,TRemove> $options */
+            /** @var array<TRemove,TValue> $options */
             $options = &$options[$index];
         }
 
-        /** @var array<string,TRemove> $options */
+        /** @var array<TRemove,TValue> $options */
         unset($options[$key]);
     }
 
     /**
-     * @template TSet
+     * @template TSet of string
+     * @template TSetValue
      *
-     * @param TSet $value
+     * @param TSet      $key
+     * @param TSetValue $value
+     *
+     * @psalm-this-out self<TSet|TKey,TValue|TSetValue>
      */
+    #[Override]
     public function set(string $key, mixed $value): void
     {
         if (! str_contains($key, '.')) {
             $this->options[$key] = $value;
-
             return;
         }
 
         $options = &$this->options;
 
         $indexes = explode('.', $key);
+
         while ($index = array_shift($indexes)) {
-            /** @var array<string,TSet> $options */
+            /**
+             * @var TSet                  $index
+             * @var array<TSet,TSetValue> $options
+             */
             $options = &$options[$index];
         }
 
-        /** @var TSet $options */
+        /** @var TSetValue $options */
         $options = $value;
     }
 
+    /**
+     * @return array<TKey,TValue>
+     */
+    #[Override]
     public function toArray(): array
     {
         return $this->options;
     }
 
     /**
-     * Create a new configuration.
+     * @template TPathKey of string
+     * @template TPathValue
      *
-     * @template TFromPath
+     * @param TPathKey $path
      *
      * @throws ConfigFileNotFoundException
      * @throws InvalidConfigFileException
      */
-    public static function fromPath(string $path, ?string $key = null): self
+    public static function fromPath(string $path): self
     {
         if (! is_file($path)) {
             throw new ConfigFileNotFoundException($path);
         }
 
-        /** @var array<string,TFromPath>|TFromPath $options */
+        /** @var array<TPathValue> $options */
         $options = require $path;
 
         if (! is_array($options)) {
             throw new InvalidConfigFileException($path);
         }
 
-        if ($key !== null) {
-            /** @var array<string,TFromPath> $options */
-            $options = [
-                $key => $options,
-            ];
-        }
+        /** @var TPathKey $key */
+        $key = basename($path, '.php');
 
-        /** @var array<string,TFromPath> $options */
+        /** @var array<TPathKey,TPathValue> $options */
+        $options = [
+            $key => $options,
+        ];
+
         return new self($options);
     }
 
     /**
-     * @template TNew
+     * @template TNewKey of string
+     * @template TNewValue
      *
-     * @param array<string,TNew> $options
+     * @param array<TNewKey,TNewValue> $options
      */
     public static function new(array $options): self
     {
