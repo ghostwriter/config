@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ghostwriter\ConfigTests\Unit;
+namespace Tests\Unit;
 
 use Closure;
 use EmptyIterator;
@@ -40,9 +40,10 @@ use function tempnam;
 final class ConfigTest extends TestCase
 {
     /**
-     * @template TMixed
+     * @template TKey of non-empty-string
+     * @template TValue
      *
-     * @param array<string,TMixed> $options
+     * @param array<TKey,TValue> $options
      */
     public function createConfig(array $options = []): Config
     {
@@ -92,6 +93,9 @@ final class ConfigTest extends TestCase
         self::assertSame('foo-bar-baz', $config->get('foo.bar.baz'));
     }
 
+    /**
+     * @param non-empty-string $key
+     */
     #[DataProvider('setValidOptionProvider')]
     public function testAddValidOption(string $key, mixed $value): void
     {
@@ -99,7 +103,6 @@ final class ConfigTest extends TestCase
 
         $config->set($key, $value);
 
-        /** @var null|mixed $actual */
         $actual = $config->get($key);
 
         self::assertSame($value, $actual);
@@ -236,10 +239,7 @@ final class ConfigTest extends TestCase
             ],
         ]);
 
-        //        $bar = $config->wrap('bar');
-
         self::assertSame('barBaz', $config->get('bar.baz'));
-        //        self::assertNull($bar->get('foo'));
     }
 
     public function testItCanUnsetAnOption(): void
@@ -272,13 +272,13 @@ final class ConfigTest extends TestCase
 
         $this->expectExceptionMessage($path);
 
-        Config::fromPath($path, $key);
+        Config::fromPath($path);
     }
 
     #[DataProvider('validPaths')]
     public function testRequirePath(string $path, string $key): void
     {
-        $config = Config::fromPath($path, $key);
+        $config = Config::fromPath($path);
 
         self::assertTrue($config->has($key));
 
@@ -365,7 +365,7 @@ final class ConfigTest extends TestCase
 
     public static function fixture(string $path): string
     {
-        $realpath = realpath(sprintf('%s/Fixture/config.%s.php', dirname(__DIR__, 1), mb_strtolower($path)));
+        $realpath = realpath(sprintf('%s/Fixture/config/%s.php', dirname(__DIR__, 1), mb_strtolower($path)));
 
         if ($realpath === false) {
             throw new ConfigFileNotFoundException($path);
@@ -389,23 +389,18 @@ final class ConfigTest extends TestCase
      */
     public static function setValidOptionProvider(): Generator
     {
-        yield 'null' => ['null', null];
-        yield 'EmptyIterator' => ['EmptyIterator', new EmptyIterator()];
-        yield 'SplFixedArray' => ['SplFixedArray', new SplFixedArray()];
-        yield 'string' => ['key', stdClass::class];
-        yield 'float' => ['float', PHP_FLOAT_MAX];
-        yield 'int' => ['int', PHP_INT_MAX];
-        yield 'object' => ['object', new stdClass()];
         yield 'Closure' => [
             'Closure',
-            static fn (): bool => true,
+/** @return true */ static fn (): bool => true,
         ];
-
+        yield 'EmptyIterator' => ['EmptyIterator', new EmptyIterator()];
+        yield 'SplFixedArray' => ['SplFixedArray', new SplFixedArray()];
         yield 'array' => [
             'array', [
                 'key' => 'value',
             ]];
-
+        yield 'float' => ['float', PHP_FLOAT_MAX];
+        yield 'int' => ['int', PHP_INT_MAX];
         yield 'nested-array' => [
             'nested-array', [
                 'nested' => [
@@ -414,6 +409,9 @@ final class ConfigTest extends TestCase
                     ],
                 ],
             ]];
+        yield 'null' => ['null', null];
+        yield 'object' => ['object', new stdClass()];
+        yield 'string' => ['key', stdClass::class];
     }
 
     /**
@@ -422,15 +420,15 @@ final class ConfigTest extends TestCase
     public static function validOptions(): Generator
     {
         yield from [
-            'empty' => [[]],
-            'string' => [[
-                'string-key' => 'string-value',
+            'closure' => [[
+                'closure' => /** @return 'closure' */ static fn (): string => 'closure',
             ]],
+            'empty' => [[]],
             'null' => [[
                 'null' => null,
             ]],
-            'closure' => [[
-                'closure' => static fn (): string => 'closure',
+            'string' => [[
+                'string-key' => 'string-value',
             ]],
         ];
     }
@@ -441,8 +439,8 @@ final class ConfigTest extends TestCase
     public static function validPaths(): Generator
     {
         yield from [
-            'local' => [self::fixture('local'), 'local-key'],
-            'testing' => [self::fixture('testing'), 'testing-key'],
+            'local' => [self::fixture('local'), 'local'],
+            'testing' => [self::fixture('testing'), 'testing'],
         ];
     }
 }
