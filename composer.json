@@ -35,8 +35,7 @@
         "php": ">=8.3"
     },
     "require-dev": {
-        "ghostwriter/coding-standard": "dev-main",
-        "ghostwriter/psalm-plugin": "^0.2.0"
+        "ghostwriter/coding-standard": "dev-main"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
@@ -47,7 +46,6 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Ghostwriter\\ConfigTests\\": "tests/",
             "Tests\\": "tests"
         }
     },
