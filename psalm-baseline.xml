@@ -1,24 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
   <file src="src/Config.php">
-    <MissingOverrideAttribute>
-      <code><![CDATA[public function get(string $key, mixed $default = null): mixed]]></code>
-      <code><![CDATA[public function has(string $key): bool]]></code>
-      <code><![CDATA[public function remove(string $key): void]]></code>
-      <code><![CDATA[public function set(string $key, mixed $value): void]]></code>
-      <code><![CDATA[public function toArray(): array]]></code>
-    </MissingOverrideAttribute>
+    <DocblockTypeContradiction>
+      <code><![CDATA[is_array($options)]]></code>
+    </DocblockTypeContradiction>
+    <InvalidDocblock>
+      <code><![CDATA[$options = &$options[$index]]]></code>
+      <code><![CDATA[$options = &$options[$index]]]></code>
+    </InvalidDocblock>
+    <InvalidPropertyAssignmentValue>
+      <code><![CDATA[$this->options]]></code>
+    </InvalidPropertyAssignmentValue>
+    <PossiblyInvalidArrayOffset>
+      <code><![CDATA[$options[$index]]]></code>
+    </PossiblyInvalidArrayOffset>
     <UnsupportedPropertyReferenceUsage>
-      <code><![CDATA[$options = &$this->options]]></code>
-      <code><![CDATA[$options = &$this->options]]></code>
       <code><![CDATA[$options = &$this->options]]></code>
       <code><![CDATA[$options = &$this->options]]></code>
     </UnsupportedPropertyReferenceUsage>
   </file>
   <file src="tests/Unit/ConfigTest.php">
-    <LessSpecificReturnType>
-      <code><![CDATA[bool]]></code>
-      <code><![CDATA[string]]></code>
-    </LessSpecificReturnType>
+    <MixedAssignment>
+      <code><![CDATA[$actual]]></code>
+    </MixedAssignment>
+    <TypeDoesNotContainType>
+      <code><![CDATA[assertSame]]></code>
+    </TypeDoesNotContainType>
+    <UnusedParam>
+      <code><![CDATA[$key]]></code>
+    </UnusedParam>
   </file>
 </files>
