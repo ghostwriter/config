@@ -108,7 +108,6 @@ final class Config implements ConfigInterface
         while ([] !== $indexes) {
             $index = array_shift($indexes);
 
-            /** @var array<string,mixed> $options */
             $options = &$options[$index];
         }
 
