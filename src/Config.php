@@ -4,98 +4,91 @@ declare(strict_types=1);
 
 namespace Ghostwriter\Config;
 
-use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
-use Ghostwriter\Config\Exception\InvalidConfigFileException;
+use Ghostwriter\Config\Exception\EmptyConfigKeyException;
+use Ghostwriter\Config\Exception\InvalidConfigKeyException;
 use Ghostwriter\Config\Interface\ConfigInterface;
 use Override;
 
 use function array_key_exists;
+use function array_map;
+use function array_merge_recursive;
 use function array_pop;
 use function array_shift;
-use function basename;
 use function explode;
+use function implode;
 use function is_array;
-use function is_file;
+use function is_string;
+use function mb_trim;
 use function str_contains;
 
-/**
- * @template TKey of string
- * @template TValue
- *
- * @implements ConfigInterface<TKey,TValue>
- */
 final class Config implements ConfigInterface
 {
     /**
-     * @param array<TKey,TValue> $options
+     * @var array<string,mixed>
+     */
+    private array $options = [];
+
+    /**
+     * @param array<string,mixed> $options
+     *
+     * @throws EmptyConfigKeyException
+     * @throws InvalidConfigKeyException
      */
     public function __construct(
-        private array $options = []
+        array $options = [],
     ) {
+        /** @var array<array-key,mixed> $options */
+        foreach ($options as $key => $value) {
+            if (! is_string($key)) {
+                throw new InvalidConfigKeyException('Config key must be a non-empty-string');
+            }
+
+            $this->set($key, $value);
+        }
     }
 
     /**
-     * @template TGet of string
-     * @template TDefault
+     * @param array<string,mixed> $options
      *
-     * @param TGet     $key
-     * @param TDefault $default
-     *
-     * @return TDefault|TValue
+     * @throws EmptyConfigKeyException
+     * @throws InvalidConfigKeyException
      */
+    public static function new(array $options = []): self
+    {
+        return new self($options);
+    }
+
     #[Override]
     public function get(string $key, mixed $default = null): mixed
     {
-        if (array_key_exists($key, $this->options)) {
-            /** @var TValue */
-            return $this->options[$key];
+        if (str_contains($key, '.')) {
+            return self::getRecursively($this->options, $default, ...explode('.', $key));
         }
 
-        $current = $this->options;
-        foreach (explode('.', $key) as $index) {
-            if (! is_array($current) || ! array_key_exists($index, $current)) {
-                /** @var TDefault */
-                return $default;
-            }
-
-            /** @var TValue $current */
-            $current = $current[$index];
-        }
-
-        return $current;
+        return $this->options[$key] ?? $default;
     }
 
-    /**
-     * @template THas of string
-     *
-     * @param THas $key
-     */
     #[Override]
     public function has(string $key): bool
     {
-        if (! str_contains($key, '.')) {
-            return array_key_exists($key, $this->options);
+        if (str_contains($key, '.')) {
+            return $this->hasRecursively($this->options, ...explode('.', $key));
         }
 
-        $options = $this->options;
-
-        foreach (explode('.', $key) as $index) {
-            if (! is_array($options) || ! array_key_exists($index, $options)) {
-                return false;
-            }
-
-            /** @var array<THas,TValue>|TValue $options */
-            $options = $options[$index];
-        }
-
-        return $options !== null;
+        return array_key_exists($key, $this->options);
     }
 
     /**
-     * @template TRemove of string
-     *
-     * @param TRemove $key
+     * @param array<string,mixed> $config
      */
+    #[Override]
+    public function merge(array $config): self
+    {
+        $this->options = array_merge_recursive($this->options, $config);
+
+        return $this;
+    }
+
     #[Override]
     public function remove(string $key): void
     {
@@ -107,102 +100,104 @@ final class Config implements ConfigInterface
 
         $options = &$this->options;
 
+        /** @var list<string> $indexes */
         $indexes = explode('.', $key);
 
-        $key = array_pop($indexes);
+        $last = array_pop($indexes);
 
-        while ($index = array_shift($indexes)) {
-            /** @var array<TRemove,TValue> $options */
+        while ([] !== $indexes) {
+            $index = array_shift($indexes);
+
+            /** @var array<string,mixed> $options */
             $options = &$options[$index];
         }
 
-        /** @var array<TRemove,TValue> $options */
-        unset($options[$key]);
+        /** @var array<string,mixed> $options */
+        unset($options[$last]);
     }
 
     /**
-     * @template TSet of string
-     * @template TSetValue
-     *
-     * @param TSet      $key
-     * @param TSetValue $value
-     *
-     * @psalm-this-out self<TSet|TKey,TValue|TSetValue>
+     * @throws EmptyConfigKeyException
      */
     #[Override]
     public function set(string $key, mixed $value): void
     {
-        if (! str_contains($key, '.')) {
-            $this->options[$key] = $value;
-            return;
+        if ('' === mb_trim($key)) {
+            throw new EmptyConfigKeyException();
         }
 
-        $options = &$this->options;
-
-        $indexes = explode('.', $key);
-
-        while ($index = array_shift($indexes)) {
-            /**
-             * @var TSet                  $index
-             * @var array<TSet,TSetValue> $options
-             */
-            $options = &$options[$index];
-        }
-
-        /** @var TSetValue $options */
-        $options = $value;
+        $this->setRecursively($this->options, $value, ...explode('.', $key));
     }
 
     /**
-     * @return array<TKey,TValue>
+     * @return array<string,mixed>
      */
     #[Override]
     public function toArray(): array
     {
-        return $this->options;
+        return array_map(
+            static fn (mixed $value): mixed => $value instanceof ConfigInterface ? $value->toArray() : $value,
+            $this->options,
+        );
     }
 
-    /**
-     * @template TPathKey of string
-     * @template TPathValue
-     *
-     * @param TPathKey $path
-     *
-     * @throws ConfigFileNotFoundException
-     * @throws InvalidConfigFileException
-     */
-    public static function fromPath(string $path): self
+    private function hasRecursively(array $options, string ...$keys): bool
     {
-        if (! is_file($path)) {
-            throw new ConfigFileNotFoundException($path);
+        $last = array_pop($keys);
+
+        foreach ($keys as $key) {
+            if (! array_key_exists($key, $options)) {
+                return false;
+            }
+
+            /** @var array<string,mixed>|mixed $options */
+            $options = $options[$key];
+
+            if (! is_array($options)) {
+                return false;
+            }
         }
 
-        /** @var array<TPathValue> $options */
-        $options = require $path;
-
-        if (! is_array($options)) {
-            throw new InvalidConfigFileException($path);
-        }
-
-        /** @var TPathKey $key */
-        $key = basename($path, '.php');
-
-        /** @var array<TPathKey,TPathValue> $options */
-        $options = [
-            $key => $options,
-        ];
-
-        return new self($options);
+        return array_key_exists($last, $options);
     }
 
-    /**
-     * @template TNewKey of string
-     * @template TNewValue
-     *
-     * @param array<TNewKey,TNewValue> $options
-     */
-    public static function new(array $options): self
+    private function setRecursively(array &$config, mixed $value, string ...$keys): void
     {
-        return new self($options);
+        $current = &$config;
+
+        foreach ($keys as $key) {
+            if ('' === mb_trim($key)) {
+                throw new InvalidConfigKeyException(implode('.', $keys));
+            }
+
+            if (! array_key_exists($key, $current)) {
+                $current[$key] = [];
+            }
+
+            $current = &$current[$key];
+        }
+
+        $current = $value;
+    }
+
+    private static function getRecursively(array $config, mixed $default, string ...$keys): mixed
+    {
+        $key = array_shift($keys);
+
+        if (! array_key_exists($key, $config)) {
+            return $default;
+        }
+
+        if ([] === $keys) {
+            return $config[$key] ?? $default;
+        }
+
+        $value = $config[$key];
+
+        if (is_array($value)) {
+            return self::getRecursively($value, $default, ...$keys);
+        }
+
+        return $default;
     }
 }
