@@ -1,33 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
+<files psalm-version="5.26.1@d747f6500b38ac4f7dfc5edbcae6e4b637d7add0">
   <file src="src/Config.php">
-    <DocblockTypeContradiction>
-      <code><![CDATA[is_array($options)]]></code>
-    </DocblockTypeContradiction>
-    <InvalidDocblock>
-      <code><![CDATA[$options = &$options[$index]]]></code>
-      <code><![CDATA[$options = &$options[$index]]]></code>
-    </InvalidDocblock>
-    <InvalidPropertyAssignmentValue>
+    <MixedArgument>
+      <code><![CDATA[$current]]></code>
+    </MixedArgument>
+    <MixedAssignment>
+      <code><![CDATA[$current]]></code>
+      <code><![CDATA[$value]]></code>
+      <code><![CDATA[$value]]></code>
+    </MixedAssignment>
+    <MixedPropertyTypeCoercion>
       <code><![CDATA[$this->options]]></code>
-    </InvalidPropertyAssignmentValue>
-    <PossiblyInvalidArrayOffset>
-      <code><![CDATA[$options[$index]]]></code>
-    </PossiblyInvalidArrayOffset>
+    </MixedPropertyTypeCoercion>
+    <UndefinedFunction>
+      <code><![CDATA[mb_trim($key)]]></code>
+      <code><![CDATA[mb_trim($key)]]></code>
+    </UndefinedFunction>
     <UnsupportedPropertyReferenceUsage>
       <code><![CDATA[$options = &$this->options]]></code>
-      <code><![CDATA[$options = &$this->options]]></code>
     </UnsupportedPropertyReferenceUsage>
+    <UnusedVariable>
+      <code><![CDATA[$current]]></code>
+    </UnusedVariable>
   </file>
-  <file src="tests/Unit/ConfigTest.php">
+  <file src="src/ConfigFactory.php">
+    <MissingTemplateParam>
+      <code><![CDATA[$phpFiles]]></code>
+    </MissingTemplateParam>
+    <MixedArgument>
+      <code><![CDATA[mb_trim(str_replace([$configDirectory, '.php'], '', $path), DIRECTORY_SEPARATOR)]]></code>
+    </MixedArgument>
+    <MixedArrayAccess>
+      <code><![CDATA[$current[$key]]]></code>
+      <code><![CDATA[$current[$key]]]></code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment>
+      <code><![CDATA[$current[$key]]]></code>
+    </MixedArrayAssignment>
+    <MixedAssignment>
+      <code><![CDATA[$current[$key]]]></code>
+    </MixedAssignment>
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$configs]]></code>
+    </PossiblyInvalidArgument>
+    <PossiblyUndefinedMethod>
+      <code><![CDATA[$current]]></code>
+      <code><![CDATA[$current]]></code>
+      <code><![CDATA[$current]]></code>
+    </PossiblyUndefinedMethod>
+    <UndefinedFunction>
+      <code><![CDATA[mb_trim($configDirectory)]]></code>
+      <code><![CDATA[mb_trim($configFile)]]></code>
+      <code><![CDATA[mb_trim(str_replace([$configDirectory, '.php'], '', $path), DIRECTORY_SEPARATOR)]]></code>
+    </UndefinedFunction>
+  </file>
+  <file src="src/Interface/ConfigInterface.php">
+    <PossiblyUnusedReturnValue>
+      <code><![CDATA[self]]></code>
+    </PossiblyUnusedReturnValue>
+  </file>
+  <file src="tests/unit/AbstractTestCase.php">
+    <MixedArgument>
+      <code><![CDATA[$paths]]></code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion>
+      <code><![CDATA[$options]]></code>
+    </MixedArgumentTypeCoercion>
+    <MixedInferredReturnType>
+      <code><![CDATA[string]]></code>
+      <code><![CDATA[string]]></code>
+    </MixedInferredReturnType>
+    <MixedReturnStatement>
+      <code><![CDATA[$paths[$path]]]></code>
+      <code><![CDATA[$realpath]]></code>
+    </MixedReturnStatement>
+  </file>
+  <file src="tests/unit/ConfigTest.php">
+    <DocblockTypeContradiction>
+      <code><![CDATA[assertSame]]></code>
+    </DocblockTypeContradiction>
     <MixedAssignment>
       <code><![CDATA[$actual]]></code>
     </MixedAssignment>
-    <TypeDoesNotContainType>
-      <code><![CDATA[assertSame]]></code>
-    </TypeDoesNotContainType>
-    <UnusedParam>
-      <code><![CDATA[$key]]></code>
-    </UnusedParam>
   </file>
 </files>
