@@ -6,7 +6,6 @@ namespace Ghostwriter\Config;
 
 use Ghostwriter\Config\Exception\EmptyConfigKeyException;
 use Ghostwriter\Config\Exception\InvalidConfigKeyException;
-use Ghostwriter\Config\Interface\ConfigInterface;
 use Override;
 
 use function array_key_exists;
@@ -108,6 +107,7 @@ final class Config implements ConfigInterface
         while ([] !== $indexes) {
             $index = array_shift($indexes);
 
+            /** @var array<string,mixed> $options */
             $options = &$options[$index];
         }
 

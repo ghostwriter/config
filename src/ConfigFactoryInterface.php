@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ghostwriter\Config\Interface;
+namespace Ghostwriter\Config;
 
 interface ConfigFactoryInterface
 {
@@ -11,7 +11,7 @@ interface ConfigFactoryInterface
      */
     public function create(array $config = []): ConfigInterface;
 
-    public function createFromDirectory(string $configDirectory): ConfigInterface;
+    public function createFromDirectory(string $directory): ConfigInterface;
 
-    public function createFromFile(string $configFile): ConfigInterface;
+    public function createFromFile(string $file): ConfigInterface;
 }
