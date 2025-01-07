@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Ghostwriter\Config\Interface;
+namespace Ghostwriter\Config\Exception;
 
 use Throwable;
 

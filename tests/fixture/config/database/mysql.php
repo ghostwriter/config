@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Ghostwriter\Config\Interface\ConfigInterface;
-use Ghostwriter\Config\Interface\ConfigProviderInterface;
+use Ghostwriter\Config\ConfigInterface;
+use Ghostwriter\Config\ConfigProviderInterface;
 
 return new class implements ConfigProviderInterface
 {
