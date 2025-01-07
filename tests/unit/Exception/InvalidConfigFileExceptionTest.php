@@ -6,8 +6,8 @@ namespace Tests\Unit\Exception;
 
 use Ghostwriter\Config\Config;
 use Ghostwriter\Config\ConfigFactory;
+use Ghostwriter\Config\Exception\ExceptionInterface;
 use Ghostwriter\Config\Exception\InvalidConfigFileException;
-use Ghostwriter\Config\Interface\ExceptionInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Unit\AbstractTestCase;
 
