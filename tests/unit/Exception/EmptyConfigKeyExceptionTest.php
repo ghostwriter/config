@@ -7,7 +7,7 @@ namespace Tests\Unit\Exception;
 use Ghostwriter\Config\Config;
 use Ghostwriter\Config\ConfigFactory;
 use Ghostwriter\Config\Exception\EmptyConfigKeyException;
-use Ghostwriter\Config\Interface\ExceptionInterface;
+use Ghostwriter\Config\Exception\ExceptionInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Unit\AbstractTestCase;
 
