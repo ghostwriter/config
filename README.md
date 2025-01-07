@@ -24,31 +24,20 @@ You can also star (🌟) this repo to find it easier later.
 
 ## Usage
 
+Given the following configuration directory structure
+
+- `path/to/config/directory/app.php`
+- `path/to/config/directory/database.php`
+- `path/to/config/directory/file.php`
+
 ```php
-$key = 'nested';
-$path = 'path/to/config.php';
+$directory = 'path/to/config/directory';
+$file = 'path/to/config/directory/file.php';
 $options = [
     'settings' => [
         'enable' => true,
     ],
 ];
-
-$config = $configFactory->create($options);
-$config->toArray(); // ['settings' => ['enable'=>true]]
-
-$config = Config::fromPath($path);
-$config->toArray(); // ['settings' => ['enable'=>true]]
-
-$config = Config::fromPath($path, $key);
-$config->toArray(); // ['nested' => ['settings' => ['enable'=>true]]]
-$config->has('nested.settings.disabled'); // true
-
-//
-
-$config = new Config($options);
-$config->has('settings'); // true
-$config->has('settings.enable'); // true
-$config->get('settings.enable'); // true
 
 $config = Config::new($options);
 $config->has('settings.disabled'); // false
@@ -69,7 +58,37 @@ $config->get('settings.disabled'); // null
 $config->toArray(); // ['settings' => ['enable'=>true]]
 ```
 
-## API
+```php
+// from an array
+$configFactory = ConfigFactory::new(); // or new ConfigFactory()
+$config = $configFactory->create($options); 
+$config->toArray(); // ['settings' => ['enable'=>true]]
+
+$config->has('settings'); // true
+$config->has('settings.enable'); // true
+$config->get('settings.enable'); // true
+```
+
+```php
+// from a directory
+$configFactory = ConfigFactory::new(); // or new ConfigFactory()
+$config = $configFactory->createFromDirectory($options);
+$config->toArray(); // output below
+// [
+//      'app' => ['name'=>'App','version'=>'1.0.0'],
+//      'database' => ['host'=>'localhost','port'=>3306]
+//      'file' => ['path'=>'/path/to/file']
+// ]
+```
+
+```php
+// from a file
+$configFactory = ConfigFactory::new(); // or new ConfigFactory()
+$config = $configFactory->createFromFile($file);
+$config->toArray(); // ['path'=>'/path/to/file']
+```
+
+### API
 
 ```php
 interface ConfigInterface
@@ -78,11 +97,33 @@ interface ConfigInterface
 
     public function has(string $key): bool;
 
+    /**
+     * @param array<string,mixed> $config
+     */
+    public function merge(array $config): self;
+
     public function remove(string $key): void;
 
     public function set(string $key, mixed $value): void;
 
+    /**
+     * @return array<string,mixed>
+     */
     public function toArray(): array;
+}
+```
+
+```php
+interface ConfigFactoryInterface
+{
+    /**
+     * @param array<string,mixed> $config
+     */
+    public function create(array $config = []): ConfigInterface;
+
+    public function createFromDirectory(string $directory): ConfigInterface;
+
+    public function createFromFile(string $file): ConfigInterface;
 }
 ```
 
