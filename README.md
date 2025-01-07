@@ -127,29 +127,19 @@ interface ConfigFactoryInterface
 }
 ```
 
-## Testing
+### Changelog
 
-``` bash
-composer test
-```
+Please see [CHANGELOG.md](./CHANGELOG.md) for more information on what has changed recently.
 
-## Changelog
-
-Please see [CHANGELOG.md](./CHANGELOG.md) for more information what has changed recently.
-
-## Security
-
-If you discover any security related issues, please email `nathanael.esayeas@protonmail.com` instead of using the issue tracker.
-
-## Support
-
-[[`Become a GitHub Sponsor`](https://github.com/sponsors/ghostwriter)]
-
-## Credits
+### Credits
 
 - [Nathanael Esayeas](https://github.com/ghostwriter)
-- [All Contributors](https://github.com/ghostwriter/config/contributors)
+- [All Contributors](https://github.com/ghostwriter/wip/contributors)
 
-## License
+### License
 
-The BSD-3-Clause. Please see [License File](./LICENSE) for more information.
+Please see [LICENSE](./LICENSE) for more information on the license that applies to this project.
+
+### Security
+
+Please see [SECURITY.md](./SECURITY.md) for more information on security disclosure process.
