@@ -2,10 +2,6 @@
 
 [![Automation](https://github.com/ghostwriter/config/actions/workflows/automation.yml/badge.svg)](https://github.com/ghostwriter/config/actions/workflows/automation.yml)
 [![Supported PHP Version](https://badgen.net/packagist/php/ghostwriter/config?color=8892bf)](https://www.php.net/supported-versions)
-[![Mutation Coverage](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fghostwriter%2Fconfig%2Fmain)](https://dashboard.stryker-mutator.io/reports/github.com/ghostwriter/config/main)
-[![Code Coverage](https://codecov.io/gh/ghostwriter/config/branch/main/graph/badge.svg)](https://codecov.io/gh/ghostwriter/config)
-[![Type Coverage](https://shepherd.dev/github/ghostwriter/config/coverage.svg)](https://shepherd.dev/github/ghostwriter/config)
-[![Latest Version on Packagist](https://badgen.net/packagist/v/ghostwriter/config)](https://packagist.org/packages/ghostwriter/config)
 [![Downloads](https://badgen.net/packagist/dt/ghostwriter/config?color=blue)](https://packagist.org/packages/ghostwriter/config)
 
 Provides an object that maps configuration keys to values.
@@ -134,7 +130,7 @@ Please see [CHANGELOG.md](./CHANGELOG.md) for more information on what has chang
 ### Credits
 
 - [Nathanael Esayeas](https://github.com/ghostwriter)
-- [All Contributors](https://github.com/ghostwriter/wip/contributors)
+- [All Contributors](https://github.com/ghostwriter/config/contributors)
 
 ### License
 
