@@ -34,11 +34,10 @@
         "#StandWithUkraine"
     ],
     "require": {
-        "php": ">=8.3"
+        "php": ">=8.4"
     },
     "require-dev": {
-        "ghostwriter/coding-standard": "dev-main",
-        "ghostwriter/psalm-plugin": "dev-main"
+        "ghostwriter/coding-standard": "dev-main"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
@@ -64,7 +63,7 @@
         "discard-changes": true,
         "optimize-autoloader": true,
         "platform": {
-            "php": "8.3.999"
+            "php": "8.4.999"
         },
         "preferred-install": "dist",
         "prepend-autoloader": true,
@@ -115,7 +114,6 @@
         "rector:dry-run": "@rector --dry-run",
         "test": [
             "@phpunit",
-            "@psalm:shepherd",
             "@infection"
         ],
         "xdebug": "@putenv XDEBUG_MODE=coverage"

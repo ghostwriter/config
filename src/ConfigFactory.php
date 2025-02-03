@@ -11,9 +11,6 @@ use Ghostwriter\Config\Exception\EmptyConfigKeyException;
 use Ghostwriter\Config\Exception\InvalidConfigFileException;
 use Ghostwriter\Config\Exception\InvalidConfigKeyException;
 use Ghostwriter\Config\Exception\ShouldNotHappenException;
-use Ghostwriter\Config\Interface\ConfigFactoryInterface;
-use Ghostwriter\Config\Interface\ConfigInterface;
-use Ghostwriter\Config\Interface\ConfigProviderInterface;
 use Override;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -56,20 +53,20 @@ final readonly class ConfigFactory implements ConfigFactoryInterface
      * @throws InvalidConfigKeyException
      */
     #[Override]
-    public function createFromDirectory(string $configDirectory): ConfigInterface
+    public function createFromDirectory(string $directory): ConfigInterface
     {
-        if ('' === mb_trim($configDirectory)) {
+        if ('' === mb_trim($directory)) {
             throw new ShouldNotHappenException('Invalid config directory, empty string provided.');
         }
 
-        if (! is_dir($configDirectory)) {
-            throw new ConfigDirectoryNotFoundException($configDirectory);
+        if (! is_dir($directory)) {
+            throw new ConfigDirectoryNotFoundException($directory);
         }
 
         /** @var RegexIterator<SplFileInfo> $phpFiles */
         $phpFiles = new RegexIterator(
             new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($configDirectory, FilesystemIterator::SKIP_DOTS),
+                new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
                 RecursiveIteratorIterator::CHILD_FIRST
             ),
             '#\.php$#iu',
@@ -87,7 +84,7 @@ final readonly class ConfigFactory implements ConfigFactoryInterface
 
             $keys = explode(
                 DIRECTORY_SEPARATOR,
-                mb_trim(str_replace([$configDirectory, '.php'], '', $path), DIRECTORY_SEPARATOR)
+                mb_trim(str_replace([$directory, '.php'], '', $path), DIRECTORY_SEPARATOR)
             );
 
             foreach ($keys as $key) {
@@ -109,20 +106,20 @@ final readonly class ConfigFactory implements ConfigFactoryInterface
      * @throws InvalidConfigKeyException
      */
     #[Override]
-    public function createFromFile(string $configFile): ConfigInterface
+    public function createFromFile(string $file): ConfigInterface
     {
-        if ('' === mb_trim($configFile)) {
+        if ('' === mb_trim($file)) {
             throw new ShouldNotHappenException('Invalid config file, empty string provided.');
         }
 
-        if (! is_file($configFile)) {
-            throw new ConfigFileNotFoundException($configFile);
+        if (! is_file($file)) {
+            throw new ConfigFileNotFoundException($file);
         }
 
-        $key = basename($configFile, '.php');
+        $key = basename($file, '.php');
 
         /** @var null|array<string,mixed>|ConfigProviderInterface $options */
-        $options = require $configFile;
+        $options = require $file;
 
         if ($options instanceof ConfigProviderInterface) {
             $config = Config::new();
@@ -135,7 +132,7 @@ final readonly class ConfigFactory implements ConfigFactoryInterface
         }
 
         if (! is_array($options)) {
-            throw new InvalidConfigFileException($configFile);
+            throw new InvalidConfigFileException($file);
         }
 
         /** @var array<string,mixed> $options */
