@@ -99,7 +99,7 @@ abstract class AbstractTestCase extends TestCase
             return $realpath;
         }
 
-        $path = implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'fixture', 'config']);
+        $path = implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'Fixture', 'config']);
 
         $realpath = realpath($path);
 
