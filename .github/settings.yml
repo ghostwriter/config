@@ -3,7 +3,6 @@
   "description": "Provides an object that maps configuration keys to values."
   "homepage": "https://github.com/ghostwriter/config"
   "topics": "config, configuration, ghostwriter"
-  "private": false
   "has_issues": true
   "has_projects": false
   "has_wiki": false
