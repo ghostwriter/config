@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "df2c3fb82dfe79f9c9505089847d7352",
+    "content-hash": "673907cd1d6c2cafa111b3bc33676908",
     "packages": [],
     "packages-dev": [
         {
@@ -766,12 +766,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ghostwriter/coding-standard.git",
-                "reference": "aeec26c153d1937e7f12c46fc754c9de16040118"
+                "reference": "3ae3e7ee0910cfee6f848a5e2328672f378adcb6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ghostwriter/coding-standard/zipball/aeec26c153d1937e7f12c46fc754c9de16040118",
-                "reference": "aeec26c153d1937e7f12c46fc754c9de16040118",
+                "url": "https://api.github.com/repos/ghostwriter/coding-standard/zipball/3ae3e7ee0910cfee6f848a5e2328672f378adcb6",
+                "reference": "3ae3e7ee0910cfee6f848a5e2328672f378adcb6",
                 "shasum": ""
             },
             "require": {
@@ -821,7 +821,7 @@
                 "ext-xdebug": "*",
                 "mockery/mockery": "^1.6.12",
                 "nikic/php-parser": "^5.6.2",
-                "phpunit/phpunit": "^12.4.1",
+                "phpunit/phpunit": "^12.4.2",
                 "symfony/var-dumper": "^7.3.5"
             },
             "default-branch": true,
@@ -835,7 +835,6 @@
                 "tools/phar/phpactor",
                 "tools/phar/phpbench",
                 "tools/phar/phpdocumentor",
-                "tools/phar/phpunit",
                 "tools/phar/psalm"
             ],
             "type": "composer-plugin",
@@ -928,7 +927,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-10-28T17:42:53+00:00"
+            "time": "2025-10-30T17:11:59+00:00"
         },
         {
             "name": "ghostwriter/container",
@@ -2204,16 +2203,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "12.4.1",
+            "version": "12.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "fc5413a2e6d240d2f6d9317bdf7f0a24e73de194"
+                "reference": "a94ea4d26d865875803b23aaf78c3c2c670ea2ea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/fc5413a2e6d240d2f6d9317bdf7f0a24e73de194",
-                "reference": "fc5413a2e6d240d2f6d9317bdf7f0a24e73de194",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/a94ea4d26d865875803b23aaf78c3c2c670ea2ea",
+                "reference": "a94ea4d26d865875803b23aaf78c3c2c670ea2ea",
                 "shasum": ""
             },
             "require": {
@@ -2281,7 +2280,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/12.4.1"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/12.4.2"
             },
             "funding": [
                 {
@@ -2305,7 +2304,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-10-09T14:08:29+00:00"
+            "time": "2025-10-30T08:41:39+00:00"
         },
         {
             "name": "psr/container",
