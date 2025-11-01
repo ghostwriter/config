@@ -2,6 +2,7 @@
 * text=auto
 *.md text diff=markdown
 *.php text eol=lf diff=php
+*.phpt text eol=lf diff=php
 /.editorconfig export-ignore
 /.envrc export-ignore
 /.gitattributes export-ignore
