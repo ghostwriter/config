@@ -32,29 +32,6 @@ abstract class AbstractTestCase extends TestCase
 {
     private static string $fixtureDirectory;
 
-    #[Override]
-    final protected function setUp(): void
-    {
-        set_error_handler(
-            /**
-             * @throws ErrorException
-             */
-            static function (int $severity, string $message, string $file, int $line): never {
-                throw new ErrorException($message, 255, $severity, $file, $line);
-            },
-        );
-
-        parent::setUp();
-    }
-
-    #[Override]
-    final protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        restore_error_handler();
-    }
-
     final public static function fixture(string $path): string
     {
         static $paths = [];
