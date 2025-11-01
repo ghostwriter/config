@@ -772,19 +772,6 @@ final class ConfigurationTest extends AbstractTestCase
         self::assertSame(['a', 'b', 'c', 'd'], $configuration->get('arr'));
     }
 
-    //    /** @throws Throwable */
-    //    public function testMergeAcceptsPermittedArrayValue(): void
-    //    {
-    //        $configuration = Configuration::new();
-    //
-    //        // Triggers normalizeScalarOrNullOrThrow -> isPermittedConfigurationValue(array)
-    //        $configuration->merge([
-    //            'arr' => 'x',
-    //        ]);
-    //
-    //        self::assertSame('x', $configuration->get('arr'));
-    //    }
-
     /** @throws Throwable */
     public function testMergeAcceptsPermittedEmptyArrayValue(): void
     {
