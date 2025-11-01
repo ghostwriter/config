@@ -56,7 +56,10 @@ final class ConfigurationFileNotReadableExceptionTest extends AbstractTestCase
         file_put_contents($file, "<?php\nreturn ['foo' => 'bar'];\n");
 
         // make file unreadable
-        chmod($file, 0);
+        $chmod = chmod($file, 0);
+        if (false === $chmod) {
+            self::markTestSkipped('Could not change file permissions to unreadable.');
+        }
 
         try {
             $this->expectException(ConfigurationFileNotReadableException::class);

@@ -8,7 +8,6 @@ use Closure;
 use EmptyIterator;
 use ErrorException;
 use Generator;
-use Override;
 use PHPUnit\Framework\TestCase;
 use SplFixedArray;
 use stdClass;
@@ -24,8 +23,6 @@ use function dirname;
 use function implode;
 use function mb_strtolower;
 use function realpath;
-use function restore_error_handler;
-use function set_error_handler;
 use function sprintf;
 
 abstract class AbstractTestCase extends TestCase

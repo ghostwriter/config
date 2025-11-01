@@ -90,11 +90,11 @@ final class Configuration implements ConfigurationInterface
     #[Override]
     public function append(string $key, mixed $value): void
     {
-        [$segments, $lastSegment, $normalized] = self::resolveSegmentsLastAndNormalized($key, $value);
+        [$segments, $lastSegment, $normalized] = self::prepareKeySegmentsAndValue($key, $value);
 
         $operation = 'append to';
 
-        $this->configuration = self::recurseAppend(
+        $this->configuration = self::appendNestedValue(
             $this->configuration,
             $segments,
             $lastSegment,
@@ -108,7 +108,7 @@ final class Configuration implements ConfigurationInterface
     #[Override]
     public function get(string $key, mixed $default = null): mixed
     {
-        [$found, $value] = self::findValueByKeySegments($key);
+        [$found, $value] = self::resolveValueByDotNotationKey($key, $this->configuration);
 
         if ($found) {
             return $value;
@@ -121,7 +121,7 @@ final class Configuration implements ConfigurationInterface
     #[Override]
     public function has(string $key): bool
     {
-        [$found] = self::findValueByKeySegments($key);
+        [$found] = self::resolveValueByDotNotationKey($key, $this->configuration);
 
         return $found;
     }
@@ -130,24 +130,25 @@ final class Configuration implements ConfigurationInterface
     #[Override]
     public function merge(array $options): void
     {
-        array_walk($options, fn (mixed $value, mixed $key) => $this->mergeSingleKeyValue($key, $value));
+        array_walk($options, fn (mixed $value, mixed $key) => $this->mergeKeyValuePair($key, $value));
     }
 
     /** @throws ConfigurationExceptionInterface */
     #[Override]
     public function mergeDirectory(string $directory): void
     {
-        $realDirectory = self::resolveRealDirectoryOrThrow($directory);
+        $realDirectory = self::getRealDirectoryPathOrThrow($directory);
 
-        self::assertDirectoryExists($realDirectory);
+        self::ensureDirectoryExists($realDirectory);
 
-        self::assertDirectoryIsReadable($realDirectory);
+        self::ensureDirectoryIsReadable($realDirectory);
 
-        $fileList = iterator_to_array(self::createPhpFilesIterator($realDirectory));
+        $fileList = iterator_to_array(self::buildPhpFileIterator($realDirectory));
 
         array_walk($fileList, function (SplFileInfo $phpFile) use ($directory, $realDirectory): void {
-            $path = self::resolveFileRealPathOrThrow($phpFile, $directory);
-            $configKey = self::deriveConfigurationKeyFromFilePath($realDirectory, $path);
+            $path = self::getFileRealPathOrThrow($phpFile, $directory);
+            $configKey = self::convertFilePathToConfigKey($realDirectory, $path);
+
             $this->mergeFile($path, $configKey);
         });
     }
@@ -156,29 +157,28 @@ final class Configuration implements ConfigurationInterface
     #[Override]
     public function mergeFile(string $file, ?string $key = null): void
     {
-        self::assertFileExists($file);
-        self::assertFileIsReadable($file);
+        $value = self::loadConfigurationFile($file);
 
-        $value = self::normalizeArray(self::requireConfigFileReturningArray($file));
-
-        if (null === $key) {
-            $this->merge($value);
-
-            return;
-        }
-
-        $this->merge([
+        $options = null === $key ? $value : [
             $key => $value,
-        ]);
+        ];
+
+        $this->merge($options);
     }
 
     /** @throws ConfigurationExceptionInterface */
     #[Override]
     public function prepend(string $key, mixed $value): void
     {
-        [$segments, $lastSegment, $normalized] = self::resolveSegmentsLastAndNormalized($key, $value);
+        [$segments, $lastSegment, $normalized] = self::prepareKeySegmentsAndValue($key, $value);
 
-        $this->configuration = self::prependValue($this->configuration, $segments, $lastSegment, $normalized, $key);
+        $this->configuration = self::prependNestedValue(
+            $this->configuration,
+            $segments,
+            $lastSegment,
+            $normalized,
+            $key
+        );
     }
 
     #[Override]
@@ -191,9 +191,9 @@ final class Configuration implements ConfigurationInterface
     #[Override]
     public function set(string $key, mixed $value): void
     {
-        [$segments, $lastSegment, $normalized] = self::resolveSegmentsLastAndNormalized($key, $value);
+        [$segments, $lastSegment, $normalized] = self::prepareKeySegmentsAndValue($key, $value);
 
-        $this->configuration = self::setRecursively(
+        $this->configuration = self::setNestedValue(
             $this->configuration,
             $segments,
             $lastSegment,
@@ -220,7 +220,7 @@ final class Configuration implements ConfigurationInterface
             return;
         }
 
-        $this->configuration = self::recurseUnset($this->configuration, self::parseAndValidateKeyIntoSegments($key));
+        $this->configuration = self::unsetNestedValue($this->configuration, self::validateAndSplitDotNotationKey($key));
     }
 
     /** @throws ConfigurationExceptionInterface */
@@ -240,107 +240,29 @@ final class Configuration implements ConfigurationInterface
         ));
     }
 
-    /**
-     * @throws ConfigurationExceptionInterface
-     *
-     * @return array{0:bool,1:mixed}
-     */
-    private function findValueByKeySegments(string $key): array
-    {
-        return array_reduce(
-            self::parseAndValidateKeyIntoSegments($key),
-            static fn (array $result, string $segment): array => self::reduceSegmentResolution($result, $segment),
-            [true, $this->configuration]
-        );
-    }
-
     /** @throws ConfigurationExceptionInterface */
-    private function mergeSingleKeyValue(mixed $key, mixed $value): void
+    private function mergeKeyValuePair(mixed $key, mixed $value): void
     {
-        self::assertKeyIsString($key);
+        self::ensureKeyIsString($key);
 
-        [$segments, $lastSegment] = self::parseAndSplitSegments($key);
+        [$segments, $lastSegment] = self::splitDotNotationKey($key);
 
-        $this->configuration = self::recurseMerge(
+        $this->configuration = self::mergeNestedValue(
             $this->configuration,
             $segments,
             $lastSegment,
-            self::normalizeValueForKey($key, $value)
+            self::normalizeConfigurationValue($key, $value)
         );
     }
 
-    /** @return array<non-empty-string,T> */
-    private function requireConfigFileReturningArray(string $file): array
-    {
-        return (static function (string $file): array {
-            set_error_handler(
-                static function (int $severity, string $message, string $file, int $line): never {
-                    throw new ErrorException($message, 0, $severity, $file, $line);
-                }
-            );
-
-            $configuration = null;
-
-            try {
-                $configuration = require $file;
-            } catch (ErrorException $throwable) {
-                throw new FailedToLoadConfigurationFileWithErrorsException(
-                    message: sprintf('Failed to load config file: %s', $file),
-                    previous: $throwable
-                );
-            } catch (Throwable $throwable) {
-                throw new FailedToLoadConfigurationFileException(
-                    message: sprintf('Failed to load config file: %s', $file),
-                    previous: $throwable
-                );
-            } finally {
-                restore_error_handler();
-            }
-
-            self::assertConfigurationFileReturnsArray($configuration, $file);
-
-            /** @var array<non-empty-string,T> $configuration */
-            return $configuration;
-        })($file);
-    }
-
-    private function resolveFileRealPathOrThrow(SplFileInfo $phpFile, string $directory): string
-    {
-        $path = $phpFile->getRealPath();
-
-        if (false === $path) {
-            throw new ConfigurationFilePathResolutionException(sprintf(
-                'Failed to get real path for "%s" file in directory "%s".',
-                $phpFile->getPathname(),
-                $directory
-            ));
-        }
-
-        return $path;
-    }
-
-    private function resolveRealDirectoryOrThrow(string $directory): string
-    {
-        $realDirectory = realpath($directory);
-
-        if (false === $realDirectory) {
-            throw new ConfigurationDirectoryNotFoundException(sprintf(
-                'Config directory "%s" cannot be resolved to a real path.',
-                $directory
-            ));
-        }
-
-        return $realDirectory;
-    }
-
     /**
      * @throws ConfigurationExceptionInterface
      *
      * @return array<non-empty-string,T>
      */
-    private static function addNormalizedNonStringKeyValue(array $carry, int|string $key, mixed $value): array
+    private static function accumulateNormalizedIntegerKeyValue(array $carry, int|string $key, mixed $value): array
     {
-        $carry[$key] = self::normalizeNonStringKeyValue($value);
+        $carry[$key] = self::normalizeValueWithIntegerKey($value);
 
         return $carry;
     }
@@ -350,11 +272,34 @@ final class Configuration implements ConfigurationInterface
      *
      * @return array<non-empty-string,T>
      */
-    private static function addNormalizedStringKeyValue(array $carry, string $key, mixed $value): array
+    private static function accumulateNormalizedStringKeyValue(array $carry, string $key, mixed $value): array
     {
-        $carry[$key] = self::normalizeValueForKey($key, $value);
+        $carry[$key] = self::normalizeConfigurationValue($key, $value);
 
         return $carry;
+    }
+
+    /**
+     * @param list<non-empty-string> $segments
+     * @param non-empty-string       $lastSegment
+     *
+     * @throws ConfigurationExceptionInterface
+     *
+     * @return array<non-empty-string,T>
+     */
+    private static function appendNestedValue(
+        array $node,
+        array $segments,
+        string $lastSegment,
+        mixed $normalized,
+        string $fullKey,
+        string $operation
+    ): array {
+        if (empty($segments)) {
+            return self::appendToFinalSegment($node, $lastSegment, $normalized);
+        }
+
+        return self::appendToNestedSegment($node, $segments, $lastSegment, $normalized, $fullKey, $operation);
     }
 
     /**
@@ -362,14 +307,11 @@ final class Configuration implements ConfigurationInterface
      *
      * @return array<non-empty-string,T>
      */
-    private static function appendLeaf(array $node, string $lastSegment, mixed $normalized): array
+    private static function appendToFinalSegment(array $node, string $lastSegment, mixed $normalized): array
     {
         $existing = $node[$lastSegment] ?? null;
 
-        $node[$lastSegment] = self::mergeLists(
-            self::convertValueToList($existing),
-            self::convertValueToList($normalized)
-        );
+        $node[$lastSegment] = array_merge(self::wrapValueInList($existing), self::wrapValueInList($normalized));
 
         return $node;
     }
@@ -382,7 +324,7 @@ final class Configuration implements ConfigurationInterface
      *
      * @return array<non-empty-string,T>
      */
-    private static function appendNonLeaf(
+    private static function appendToNestedSegment(
         array $node,
         array $segments,
         string $lastSegment,
@@ -391,111 +333,14 @@ final class Configuration implements ConfigurationInterface
         string $operation
     ): array {
         $segment = array_shift($segments);
-        $child = self::extractChildArrayOrThrow($node, $segment, $fullKey, $operation);
-        $node[$segment] = self::recurseAppend($child, $segments, $lastSegment, $normalized, $fullKey, $operation);
+        $child = self::getChildArrayOrThrowIfInvalid($node, $segment, $fullKey, $operation);
+        $node[$segment] = self::appendNestedValue($child, $segments, $lastSegment, $normalized, $fullKey, $operation);
 
         return $node;
     }
 
-    /** @param list<string> $segments */
-    private static function assertAllSegmentsAreNonEmpty(array $segments, string $key): void
-    {
-        if (! empty(array_filter($segments, static fn (string $segment): bool => '' === mb_trim($segment)))) {
-            throw new InvalidDotNotationConfigurationKeyException($key);
-        }
-    }
-
-    /**
-     * @param mixed  $configuration
-     * @param string $file
-     */
-    private static function assertConfigurationFileReturnsArray(mixed $configuration, string $file): void
-    {
-        if (! is_array($configuration)) {
-            throw new InvalidConfigurationFileException(
-                sprintf('Config file "%s" does not return a valid configuration array.', $file)
-            );
-        }
-    }
-
-    private static function assertDirectoryExists(string $realDirectory): void
-    {
-        if (! is_dir($realDirectory)) {
-            throw new ConfigurationDirectoryNotFoundException(sprintf(
-                'Config directory "%s" not found.',
-                $realDirectory
-            ));
-        }
-    }
-
-    private static function assertDirectoryIsReadable(string $realDirectory): void
-    {
-        if (! is_readable($realDirectory)) {
-            throw new ConfigurationDirectoryNotReadableException(sprintf(
-                'Config directory "%s" is not readable.',
-                $realDirectory
-            ));
-        }
-    }
-
-    private static function assertFileExists(string $file): void
-    {
-        if (! is_file($file)) {
-            throw new ConfigurationFileNotFoundException(sprintf('Config file "%s" not found.', $file));
-        }
-    }
-
-    private static function assertFileIsReadable(string $file): void
-    {
-        if (! is_readable($file)) {
-            throw new ConfigurationFileNotReadableException(sprintf('Config file "%s" is not readable.', $file));
-        }
-    }
-
-    /** @throws ConfigurationExceptionInterface */
-    private static function assertKeyIsNotEmpty(string $key): void
-    {
-        if ('' === mb_trim($key)) {
-            throw new ConfigurationKeyMustBeNonEmptyStringException();
-        }
-    }
-
-    /** @param mixed $key */
-    private static function assertKeyIsString(mixed $key): void
-    {
-        if (! is_string($key)) {
-            throw new ConfigurationKeyMustBeStringException();
-        }
-    }
-
-    /** @param list<string> $segments */
-    private static function assertSegmentsListIsNotEmpty(array $segments, string $key): void
-    {
-        if (empty($segments)) {
-            throw new InvalidDotNotationConfigurationKeyException($key);
-        }
-    }
-
-    /**
-     * @throws ConfigurationExceptionInterface
-     *
-     * @return list<mixed>
-     */
-    private static function convertValueToList(mixed $value): array
-    {
-        if (null === $value) {
-            return [];
-        }
-
-        if (is_array($value)) {
-            return self::normalizeArray($value);
-        }
-
-        return [$value];
-    }
-
     /** @return RegexIterator<SplFileInfo> */
-    private static function createPhpFilesIterator(string $realDirectory): RegexIterator
+    private static function buildPhpFileIterator(string $realDirectory): RegexIterator
     {
         return new RegexIterator(
             new RecursiveIteratorIterator(
@@ -507,7 +352,7 @@ final class Configuration implements ConfigurationInterface
         );
     }
 
-    private static function deriveConfigurationKeyFromFilePath(string $realDirectory, string $path): string
+    private static function convertFilePathToConfigKey(string $realDirectory, string $path): string
     {
         $baseLen = mb_strlen($realDirectory);
 
@@ -516,8 +361,87 @@ final class Configuration implements ConfigurationInterface
         return str_replace(DIRECTORY_SEPARATOR, '.', mb_trim($relative, DIRECTORY_SEPARATOR));
     }
 
+    /** @param list<string> $segments */
+    private static function ensureAllSegmentsNonEmpty(array $segments, string $key): void
+    {
+        if (! empty(array_filter($segments, static fn (string $segment): bool => '' === mb_trim($segment)))) {
+            throw new InvalidDotNotationConfigurationKeyException($key);
+        }
+    }
+
+    /**
+     * @param mixed  $configuration
+     * @param string $file
+     */
+    private static function ensureConfigurationFileReturnsArray(mixed $configuration, string $file): void
+    {
+        if (! is_array($configuration)) {
+            throw new InvalidConfigurationFileException(
+                sprintf('Config file "%s" does not return a valid configuration array.', $file)
+            );
+        }
+    }
+
+    private static function ensureDirectoryExists(string $realDirectory): void
+    {
+        if (! is_dir($realDirectory)) {
+            throw new ConfigurationDirectoryNotFoundException(sprintf(
+                'Config directory "%s" not found.',
+                $realDirectory
+            ));
+        }
+    }
+
+    private static function ensureDirectoryIsReadable(string $realDirectory): void
+    {
+        if (! is_readable($realDirectory)) {
+            throw new ConfigurationDirectoryNotReadableException(sprintf(
+                'Config directory "%s" is not readable.',
+                $realDirectory
+            ));
+        }
+    }
+
+    private static function ensureFileExists(string $file): void
+    {
+        if (! is_file($file)) {
+            throw new ConfigurationFileNotFoundException(sprintf('Config file "%s" not found.', $file));
+        }
+    }
+
+    private static function ensureFileIsReadable(string $file): void
+    {
+        if (! is_readable($file)) {
+            throw new ConfigurationFileNotReadableException(sprintf('Config file "%s" is not readable.', $file));
+        }
+    }
+
+    /** @throws ConfigurationExceptionInterface */
+    private static function ensureKeyIsNotEmpty(string $key): void
+    {
+        if ('' === mb_trim($key)) {
+            throw new ConfigurationKeyMustBeNonEmptyStringException();
+        }
+    }
+
+    /** @param mixed $key */
+    private static function ensureKeyIsString(mixed $key): void
+    {
+        if (! is_string($key)) {
+            throw new ConfigurationKeyMustBeStringException();
+        }
+    }
+
+    /** @param list<string> $segments */
+    private static function ensureSegmentsNotEmpty(array $segments, string $key): void
+    {
+        if ([] === $segments) {
+            throw new InvalidDotNotationConfigurationKeyException($key);
+        }
+    }
+
     /** @return array<non-empty-string,mixed> */
-    private static function extractChildArrayOrThrow(
+    private static function getChildArrayOrThrowIfInvalid(
         array $node,
         string $segment,
         string $fullKey,
@@ -546,22 +470,134 @@ final class Configuration implements ConfigurationInterface
         return $value;
     }
 
-    private static function isPermittedScalarOrNull(mixed $value): bool
+    private static function getFileRealPathOrThrow(SplFileInfo $phpFile, string $directory): string
+    {
+        $path = $phpFile->getRealPath();
+
+        if (false === $path) {
+            throw new ConfigurationFilePathResolutionException(sprintf(
+                'Failed to get real path for "%s" file in directory "%s".',
+                $phpFile->getPathname(),
+                $directory
+            ));
+        }
+
+        return $path;
+    }
+
+    private static function getRealDirectoryPathOrThrow(string $directory): string
+    {
+        $realDirectory = realpath($directory);
+
+        if (false === $realDirectory) {
+            throw new ConfigurationDirectoryNotFoundException(sprintf(
+                'Config directory "%s" cannot be resolved to a real path.',
+                $directory
+            ));
+        }
+
+        return $realDirectory;
+    }
+
+    private static function isValidScalarOrNull(mixed $value): bool
     {
         return null === $value || is_scalar($value);
     }
 
     /** @return array<non-empty-string,T> */
-    private static function mergeLeaf(array $node, string $lastSegment, mixed $normalized): array
+    private static function loadConfigurationFile(string $file): array
+    {
+        self::ensureFileExists($file);
+
+        self::ensureFileIsReadable($file);
+
+        return (static function (string $file): array {
+            set_error_handler(
+                static function (int $severity, string $message, string $file, int $line): never {
+                    throw new ErrorException($message, 0, $severity, $file, $line);
+                }
+            );
+
+            $configuration = null;
+
+            try {
+                $configuration = require $file;
+            } catch (ErrorException $throwable) {
+                throw new FailedToLoadConfigurationFileWithErrorsException(
+                    message: sprintf('Failed to load config file: %s', $file),
+                    previous: $throwable
+                );
+            } catch (Throwable $throwable) {
+                throw new FailedToLoadConfigurationFileException(
+                    message: sprintf('Failed to load config file: %s', $file),
+                    previous: $throwable
+                );
+            } finally {
+                restore_error_handler();
+            }
+
+            self::ensureConfigurationFileReturnsArray($configuration, $file);
+
+            /** @var array<non-empty-string,T> $configuration */
+            return $configuration;
+        })($file);
+    }
+
+    /** @return array<non-empty-string,T> */
+    private static function mergeIntoFinalSegment(array $node, string $lastSegment, mixed $normalized): array
     {
         $existing = $node[$lastSegment] ?? null;
 
-        $node[$lastSegment] = self::mergeLeafValue($existing, $normalized);
+        $node[$lastSegment] = self::mergeTwoValues($existing, $normalized);
 
         return $node;
     }
 
-    private static function mergeLeafValue(mixed $existing, mixed $normalized): mixed
+    /**
+     * @param list<non-empty-string> $segments
+     * @param non-empty-string       $lastSegment
+     *
+     * @return array<non-empty-string,T>
+     */
+    private static function mergeIntoNestedSegment(
+        array $node,
+        array $segments,
+        string $lastSegment,
+        mixed $normalized
+    ): array {
+        $segment = array_shift($segments);
+
+        $value =$node[$segment] ?? [];
+
+        if (! is_array($value)) {
+            $value = [];
+        }
+
+        $node[$segment] = self::mergeNestedValue($value, $segments, $lastSegment, $normalized);
+
+        return $node;
+    }
+
+    /**
+     * @param list<non-empty-string> $segments
+     * @param non-empty-string       $lastSegment
+     *
+     * @return array<non-empty-string,T>
+     */
+    private static function mergeNestedValue(
+        array $node,
+        array $segments,
+        string $lastSegment,
+        mixed $normalized
+    ): array {
+        if (empty($segments)) {
+            return self::mergeIntoFinalSegment($node, $lastSegment, $normalized);
+        }
+
+        return self::mergeIntoNestedSegment($node, $segments, $lastSegment, $normalized);
+    }
+
+    private static function mergeTwoValues(mixed $existing, mixed $normalized): mixed
     {
         if (! is_array($normalized)) {
             return $normalized;
@@ -574,43 +610,16 @@ final class Configuration implements ConfigurationInterface
         return array_merge($existing, $normalized);
     }
 
-    /** @return list<mixed> */
-    private static function mergeLists(array $left, array $right): array
-    {
-        return array_merge($left, $right);
-    }
-
-    /**
-     * @param list<non-empty-string> $segments
-     * @param non-empty-string       $lastSegment
-     *
-     * @return array<non-empty-string,T>
-     */
-    private static function mergeNonLeaf(array $node, array $segments, string $lastSegment, mixed $normalized): array
-    {
-        $segment = array_shift($segments);
-
-        $value =$node[$segment] ?? [];
-
-        if (! is_array($value)) {
-            $value = [];
-        }
-
-        $node[$segment] = self::recurseMerge($value, $segments, $lastSegment, $normalized);
-
-        return $node;
-    }
-
     /**
      * @throws ConfigurationExceptionInterface
      *
      * @return array<non-empty-string,T>
      */
-    private static function normalizeArray(array $configuration): array
+    private static function normalizeArrayKeys(array $configuration): array
     {
         return array_reduce(
             array_keys($configuration),
-            static fn (array $carry, int|string $key): array => self::normalizeArrayKeyValue(
+            static fn (array $carry, int|string $key): array => self::normalizeKeyValuePair(
                 $carry,
                 $key,
                 $configuration[$key]
@@ -620,99 +629,94 @@ final class Configuration implements ConfigurationInterface
     }
 
     /** @throws ConfigurationExceptionInterface */
-    private static function normalizeArrayKeyValue(array $carry, int|string $key, mixed $value): array
+    private static function normalizeConfigurationValue(string $key, mixed $value): mixed
     {
-        if (is_string($key)) {
-            return self::addNormalizedStringKeyValue($carry, $key, $value);
+        if ($value instanceof ConfigurationInterface) {
+            return $value->toArray();
         }
 
-        return self::addNormalizedNonStringKeyValue($carry, $key, $value);
+        return self::normalizeNonInterfaceValue($key, $value);
     }
 
     /** @throws ConfigurationExceptionInterface */
-    private static function normalizeNonConfigurationNonStringValue(mixed $value): mixed
+    private static function normalizeKeyValuePair(array $carry, int|string $key, mixed $value): array
+    {
+        if (is_string($key)) {
+            return self::accumulateNormalizedStringKeyValue($carry, $key, $value);
+        }
+
+        return self::accumulateNormalizedIntegerKeyValue($carry, $key, $value);
+    }
+
+    /** @throws ConfigurationExceptionInterface */
+    private static function normalizeNonInterfaceValue(string $key, mixed $value): mixed
     {
         if (is_array($value)) {
-            return self::normalizeArray($value);
+            return self::normalizeArrayKeys($value);
+        }
+
+        return self::validateScalarOrThrow($key, $value);
+    }
+
+    /** @throws ConfigurationExceptionInterface */
+    private static function normalizeValueWithIntegerKey(mixed $value): mixed
+    {
+        if ($value instanceof ConfigurationInterface) {
+            return $value->toArray();
+        }
+
+        if (is_array($value)) {
+            return self::normalizeArrayKeys($value);
         }
 
         return $value;
     }
 
-    /** @throws ConfigurationExceptionInterface */
-    private static function normalizeNonConfigurationValue(string $key, mixed $value): mixed
+    /** @return list<non-empty-string> */
+    private static function parseDotNotationIntoSegments(string $key): array
     {
-        if (is_array($value)) {
-            return self::normalizeArray($value);
+        /** @var list<string> $parts */
+        $parts = preg_split(self::KEY_SEPARATOR, $key);
+
+        if (! is_array($parts)) {
+            return [];
         }
 
-        return self::normalizeScalarOrNullOrThrow($key, $value);
-    }
-
-    /** @throws ConfigurationExceptionInterface */
-    private static function normalizeNonStringKeyValue(mixed $value): mixed
-    {
-        if ($value instanceof ConfigurationInterface) {
-            return $value->toArray();
-        }
-
-        return self::normalizeNonConfigurationNonStringValue($value);
-    }
-
-    /** @throws ConfigurationExceptionInterface */
-    private static function normalizeScalarOrNullOrThrow(string $key, mixed $value): mixed
-    {
-        if (self::isPermittedScalarOrNull($value)) {
-            return $value;
-        }
-
-        throw new InvalidConfigurationValueException(sprintf(
-            'Invalid configuration value for key "%s". Expected: array, null, or scalar (bool, float, int, string). Received: %s.',
-            $key,
-            get_debug_type($value),
-        ));
-    }
-
-    /** @throws ConfigurationExceptionInterface */
-    private static function normalizeValueForKey(string $key, mixed $value): mixed
-    {
-        if ($value instanceof ConfigurationInterface) {
-            return $value->toArray();
-        }
-
-        return self::normalizeNonConfigurationValue($key, $value);
+        return $parts;
     }
 
     /**
      * @throws ConfigurationExceptionInterface
      *
-     * @return array{0:list<non-empty-string>,1:non-empty-string}
+     * @return array{0:list<non-empty-string>,1:non-empty-string,2:mixed}
      */
-    private static function parseAndSplitSegments(string $key): array
+    private static function prepareKeySegmentsAndValue(string $key, mixed $value): array
     {
-        $segments = self::parseAndValidateKeyIntoSegments($key);
+        [$segments, $lastSegment] = self::splitDotNotationKey($key);
 
-        $lastSegment = array_pop($segments);
-
-        return [$segments, $lastSegment];
+        return [$segments, $lastSegment, self::normalizeConfigurationValue($key, $value)];
     }
 
     /**
+     * @param list<non-empty-string> $segments
+     * @param non-empty-string       $lastSegment
+     *
      * @throws ConfigurationExceptionInterface
      *
-     * @return list<non-empty-string>
+     * @return array<non-empty-string,T>
      */
-    private static function parseAndValidateKeyIntoSegments(string $key): array
-    {
-        self::assertKeyIsNotEmpty($key);
+    private static function prependNestedValue(
+        array $configuration,
+        array $segments,
+        string $lastSegment,
+        mixed $normalized,
+        string $key
+    ): array {
+        if (empty($segments)) {
+            return self::prependToFinalSegment($configuration, $lastSegment, $normalized);
+        }
 
-        $segments = self::splitKeyIntoSegments($key);
-
-        self::assertSegmentsListIsNotEmpty($segments, $key);
-
-        self::assertAllSegmentsAreNonEmpty($segments, $key);
-
-        return $segments;
+        return self::prependToNestedSegment($configuration, $segments, $lastSegment, $normalized, $key, 'prepend to');
     }
 
     /**
@@ -720,14 +724,11 @@ final class Configuration implements ConfigurationInterface
      *
      * @return array<non-empty-string,T>
      */
-    private static function prependLeaf(array $node, string $lastSegment, mixed $normalized): array
+    private static function prependToFinalSegment(array $node, string $lastSegment, mixed $normalized): array
     {
-        $existing = $node[$lastSegment] ?? [];
+        $existing = $node[$lastSegment] ?? null;
 
-        $node[$lastSegment] = self::mergeLists(
-            self::convertValueToList($normalized),
-            self::convertValueToList($existing)
-        );
+        $node[$lastSegment] = array_merge(self::wrapValueInList($normalized), self::wrapValueInList($existing));
 
         return $node;
     }
@@ -740,7 +741,7 @@ final class Configuration implements ConfigurationInterface
      *
      * @return array<non-empty-string,T>
      */
-    private static function prependNonLeaf(
+    private static function prependToNestedSegment(
         array $node,
         array $segments,
         string $key,
@@ -749,50 +750,40 @@ final class Configuration implements ConfigurationInterface
         string $operation
     ): array {
         $segment = array_shift($segments);
-        $child = self::extractChildArrayOrThrow($node, $segment, $fullKey, $operation);
+        $child = self::getChildArrayOrThrowIfInvalid($node, $segment, $fullKey, $operation);
 
         if (empty($segments)) {
-            $node[$segment] = self::prependLeaf($child, $key, $value);
+            $node[$segment] = self::prependToFinalSegment($child, $key, $value);
 
             return $node;
         }
 
-        $node[$segment] = self::prependNonLeaf($child, $segments, $key, $value, $fullKey, $operation);
+        $node[$segment] = self::prependToNestedSegment($child, $segments, $key, $value, $fullKey, $operation);
 
         return $node;
     }
 
     /**
-     * @param list<non-empty-string> $segments
-     * @param non-empty-string       $lastSegment
-     *
      * @throws ConfigurationExceptionInterface
      *
-     * @return array<non-empty-string,T>
+     * @return array{0:bool,1:mixed}
      */
-    private static function prependValue(
-        array $configuration,
-        array $segments,
-        string $lastSegment,
-        mixed $normalized,
-        string $key
-    ): array {
-        if (empty($segments)) {
-            return self::prependLeaf($configuration, $lastSegment, $normalized);
-        }
-
-        return self::prependNonLeaf($configuration, $segments, $lastSegment, $normalized, $key, 'prepend to');
+    private static function resolveValueByDotNotationKey(string $key, array $configuration): array
+    {
+        return array_reduce(
+            self::validateAndSplitDotNotationKey($key),
+            static fn (array $result, string $segment): array => self::traverseConfigurationSegment($result, $segment),
+            [true, $configuration]
+        );
     }
 
     /**
      * @param list<non-empty-string> $segments
      * @param non-empty-string       $lastSegment
      *
-     * @throws ConfigurationExceptionInterface
-     *
      * @return array<non-empty-string,T>
      */
-    private static function recurseAppend(
+    private static function setNestedValue(
         array $node,
         array $segments,
         string $lastSegment,
@@ -801,41 +792,43 @@ final class Configuration implements ConfigurationInterface
         string $operation
     ): array {
         if (empty($segments)) {
-            return self::appendLeaf($node, $lastSegment, $normalized);
+            $node[$lastSegment] = $normalized;
+
+            return $node;
         }
 
-        return self::appendNonLeaf($node, $segments, $lastSegment, $normalized, $fullKey, $operation);
-    }
-
-    /**
-     * @param list<non-empty-string> $segments
-     * @param non-empty-string       $lastSegment
-     *
-     * @return array<non-empty-string,T>
-     */
-    private static function recurseMerge(array $node, array $segments, string $lastSegment, mixed $normalized): array
-    {
-        if (empty($segments)) {
-            return self::mergeLeaf($node, $lastSegment, $normalized);
-        }
-
-        return self::mergeNonLeaf($node, $segments, $lastSegment, $normalized);
-    }
-
-    /**
-     * @param list<non-empty-string> $segments
-     *
-     * @return array<non-empty-string,T>
-     */
-    private static function recurseUnset(array $node, array $segments): array
-    {
         $segment = array_shift($segments);
 
-        return self::unsetHereOrDescend($node, $segment, $segments);
+        $childArrayOrThrow = self::getChildArrayOrThrowIfInvalid($node, $segment, $fullKey, $operation);
+
+        $node[$segment] = self::setNestedValue(
+            $childArrayOrThrow,
+            $segments,
+            $lastSegment,
+            $normalized,
+            $fullKey,
+            $operation
+        );
+
+        return $node;
+    }
+
+    /**
+     * @throws ConfigurationExceptionInterface
+     *
+     * @return array{0:list<non-empty-string>,1:non-empty-string}
+     */
+    private static function splitDotNotationKey(string $key): array
+    {
+        $segments = self::validateAndSplitDotNotationKey($key);
+
+        $lastSegment = array_pop($segments);
+
+        return [$segments, $lastSegment];
     }
 
     /** @return array{0:bool,1:mixed} */
-    private static function reduceSegmentResolution(array $result, string $segment): array
+    private static function traverseConfigurationSegment(array $result, string $segment): array
     {
         [$found, $reference] = $result;
 
@@ -855,64 +848,15 @@ final class Configuration implements ConfigurationInterface
     }
 
     /**
-     * @throws ConfigurationExceptionInterface
-     *
-     * @return array{0:list<non-empty-string>,1:non-empty-string,2:mixed}
-     */
-    private static function resolveSegmentsLastAndNormalized(string $key, mixed $value): array
-    {
-        [$segments, $lastSegment] = self::parseAndSplitSegments($key);
-
-        return [$segments, $lastSegment, self::normalizeValueForKey($key, $value)];
-    }
-
-    /**
      * @param list<non-empty-string> $segments
-     * @param non-empty-string       $lastSegment
      *
      * @return array<non-empty-string,T>
      */
-    private static function setRecursively(
-        array $node,
-        array $segments,
-        string $lastSegment,
-        mixed $normalized,
-        string $fullKey,
-        string $operation
-    ): array {
-        if (empty($segments)) {
-            $node[$lastSegment] = $normalized;
-
-            return $node;
-        }
-
+    private static function unsetNestedValue(array $node, array $segments): array
+    {
         $segment = array_shift($segments);
 
-        $childArrayOrThrow = self::extractChildArrayOrThrow($node, $segment, $fullKey, $operation);
-
-        $node[$segment] = self::setRecursively(
-            $childArrayOrThrow,
-            $segments,
-            $lastSegment,
-            $normalized,
-            $fullKey,
-            $operation
-        );
-
-        return $node;
-    }
-
-    /** @return list<non-empty-string> */
-    private static function splitKeyIntoSegments(string $key): array
-    {
-        /** @var list<string> $parts */
-        $parts = preg_split(self::KEY_SEPARATOR, $key);
-
-        if (! is_array($parts)) {
-            return [];
-        }
-
-        return $parts;
+        return self::unsetSegmentValue($node, $segment, $segments);
     }
 
     /**
@@ -920,7 +864,7 @@ final class Configuration implements ConfigurationInterface
      *
      * @return array<non-empty-string,T>
      */
-    private static function unsetHereOrDescend(array $node, string $segment, array $remaining): array
+    private static function unsetSegmentValue(array $node, string $segment, array $remaining): array
     {
         if (empty($remaining)) {
             unset($node[$segment]);
@@ -936,8 +880,58 @@ final class Configuration implements ConfigurationInterface
             return $node;
         }
 
-        $node[$segment] = self::recurseUnset($node[$segment], $remaining);
+        $node[$segment] = self::unsetNestedValue($node[$segment], $remaining);
 
         return $node;
+    }
+
+    /**
+     * @throws ConfigurationExceptionInterface
+     *
+     * @return list<non-empty-string>
+     */
+    private static function validateAndSplitDotNotationKey(string $key): array
+    {
+        self::ensureKeyIsNotEmpty($key);
+
+        $segments = self::parseDotNotationIntoSegments($key);
+
+        self::ensureSegmentsNotEmpty($segments, $key);
+
+        self::ensureAllSegmentsNonEmpty($segments, $key);
+
+        return $segments;
+    }
+
+    /** @throws ConfigurationExceptionInterface */
+    private static function validateScalarOrThrow(string $key, mixed $value): mixed
+    {
+        if (self::isValidScalarOrNull($value)) {
+            return $value;
+        }
+
+        throw new InvalidConfigurationValueException(sprintf(
+            'Invalid configuration value for key "%s". Expected: array, null, or scalar (bool, float, int, string). Received: %s.',
+            $key,
+            get_debug_type($value),
+        ));
+    }
+
+    /**
+     * @throws ConfigurationExceptionInterface
+     *
+     * @return list<mixed>
+     */
+    private static function wrapValueInList(mixed $value): array
+    {
+        if (null === $value) {
+            return [];
+        }
+
+        if (is_array($value)) {
+            return self::normalizeArrayKeys($value);
+        }
+
+        return [$value];
     }
 }

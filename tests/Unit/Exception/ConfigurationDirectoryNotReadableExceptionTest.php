@@ -33,7 +33,10 @@ final class ConfigurationDirectoryNotReadableExceptionTest extends AbstractTestC
         mkdir($dir);
 
         // make directory unreadable
-        chmod($dir, 0);
+        $chmod = chmod($dir, 0);
+        if (false === $chmod) {
+            self::markTestSkipped('Could not change directory permissions to unreadable.');
+        }
 
         try {
             $this->expectException(ConfigurationDirectoryNotReadableException::class);
