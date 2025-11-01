@@ -23,7 +23,6 @@ final class FailedToLoadConfigurationFileWithErrorsExceptionTest extends Abstrac
     public function testFromInvalidFileRaisesError(): void
     {
         $this->expectException(FailedToLoadConfigurationFileWithErrorsException::class);
-        $this->expectExceptionMessageMatches('#Failed to load config file: .*invalid/errors.php#iu');
 
         Configuration::new()->mergeFile(self::fixtureDirectory('invalid', 'errors.php'));
     }

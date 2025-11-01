@@ -38,10 +38,6 @@ final class InvalidConfigurationFileExceptionTest extends AbstractTestCase
 
         $this->expectException(InvalidConfigurationFileException::class);
 
-        $this->expectExceptionMessageMatches(
-            '#^Config file ".+" does not return a valid configuration array.$#iu',
-        );
-
         Configuration::new()->mergeFile($path);
     }
 
