@@ -8,10 +8,7 @@ use Closure;
 use EmptyIterator;
 use ErrorException;
 use Generator;
-use Ghostwriter\Config\ConfigFactory;
-use Ghostwriter\Config\ConfigFactoryInterface;
-use Ghostwriter\Config\ConfigInterface;
-use Ghostwriter\Config\Exception\ConfigFileNotFoundException;
+use Override;
 use PHPUnit\Framework\TestCase;
 use SplFixedArray;
 use stdClass;
@@ -29,11 +26,13 @@ use function mb_strtolower;
 use function realpath;
 use function restore_error_handler;
 use function set_error_handler;
+use function sprintf;
 
 abstract class AbstractTestCase extends TestCase
 {
-    protected ConfigFactoryInterface $configFactory;
+    private static string $fixtureDirectory;
 
+    #[Override]
     final protected function setUp(): void
     {
         set_error_handler(
@@ -45,31 +44,15 @@ abstract class AbstractTestCase extends TestCase
             },
         );
 
-        $this->configFactory = ConfigFactory::new();
-
         parent::setUp();
     }
 
+    #[Override]
     final protected function tearDown(): void
     {
         parent::tearDown();
 
         restore_error_handler();
-    }
-
-    final public function config(array $options = []): ConfigInterface
-    {
-        return $this->configFactory->create($options);
-    }
-
-    final public function configDirectory(string $path): ConfigInterface
-    {
-        return $this->configFactory->createFromDirectory($path);
-    }
-
-    final public function configFile(string $path): ConfigInterface
-    {
-        return $this->configFactory->createFromFile($path);
     }
 
     final public static function fixture(string $path): string
@@ -81,39 +64,31 @@ abstract class AbstractTestCase extends TestCase
         }
 
         $realpath = realpath(
-            implode(DIRECTORY_SEPARATOR, [self::fixtureDirectory(), mb_strtolower($path)]) . '.php'
+            implode(DIRECTORY_SEPARATOR, [self::fixtureDirectory('valid'), mb_strtolower($path)]) . '.php'
         );
 
         if (false === $realpath) {
-            throw new ConfigFileNotFoundException($path);
+            throw new ErrorException(sprintf('Fixture file "%s" not found.', $path));
         }
 
         return $paths[$path] = $realpath;
     }
 
-    final public static function fixtureDirectory(): string
+    final public static function fixtureDirectory(string ...$segments): string
     {
-        static $realpath;
-
-        if (null !== $realpath) {
-            return $realpath;
-        }
-
-        $path = implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'Fixture', 'config']);
+        $path = implode(DIRECTORY_SEPARATOR, [self::fixtureDirectoryPath(), ...$segments]);
 
         $realpath = realpath($path);
 
         if (false === $realpath) {
-            throw new ConfigFileNotFoundException($path);
+            throw new ErrorException(sprintf('Fixture directory "%s" not found.', $path));
         }
 
         return $realpath;
     }
 
-    /**
-     * @return Generator<string,array{string,mixed}>
-     */
-    public static function setValidOptionProvider(): Generator
+    /** @return Generator<string,array{string,mixed}> */
+    public static function setInvalidOptionProvider(): Generator
     {
         yield from [
             Closure::class => [
@@ -122,6 +97,14 @@ abstract class AbstractTestCase extends TestCase
             ],
             EmptyIterator::class => [EmptyIterator::class, new EmptyIterator()],
             SplFixedArray::class => [SplFixedArray::class, new SplFixedArray()],
+            'object' => ['list', new stdClass()],
+        ];
+    }
+
+    /** @return Generator<string,array{string,mixed}> */
+    public static function setValidOptionProvider(): Generator
+    {
+        yield from [
             'bool-true' => ['true', true],
             'bool-false' => ['false', false],
             'empty' => ['array', []],
@@ -129,7 +112,7 @@ abstract class AbstractTestCase extends TestCase
             'float-min' => ['float', PHP_FLOAT_MIN],
             'int-max' => ['int', PHP_INT_MAX],
             'int-min' => ['int', PHP_INT_MIN],
-            'list' => ['list', ['string', 2, 3.7, true, false, null, new stdClass()]],
+            'list' => ['list', ['string', 2, 3.7, true, false, null, []]],
             'nested-array' => [
                 'nested-array', [
                     'nested' => [
@@ -143,20 +126,33 @@ abstract class AbstractTestCase extends TestCase
                     'key' => 'value',
                 ]],
             'null' => ['null', null],
-            'object' => ['object', new stdClass()],
             'string' => ['foo', 'bar'],
         ];
     }
 
-    /**
-     * @return Generator<string,list<string>>
-     */
+    /** @return Generator<string,list<string>> */
     public static function validPaths(): Generator
     {
         yield from [
-            'local' => [self::fixture('local'), 'local'],
-            'testing' => [self::fixture('testing'), 'testing'],
-            'ci' => [self::fixture('ci'), 'ci'],
+            'local' => [
+                self::fixture('local'), 'local', [
+                    'foo'=>'baz',
+                ]],
+            'testing' => [self::fixture('testing'),
+                'testing',
+                [
+                    'foo' => 'bar',
+                ]],
+            'ci' => [self::fixture('ci'),
+                'ci',
+                [
+                    'foo' => 'bar',
+                ]],
         ];
+    }
+
+    final protected static function fixtureDirectoryPath(): string
+    {
+        return self::$fixtureDirectory ??= implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'Fixture']);
     }
 }
