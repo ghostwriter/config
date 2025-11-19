@@ -23,7 +23,7 @@ final class FailedToLoadConfigurationFileExceptionTest extends AbstractTestCase
     public function testFromInvalidFileRaisesException(): void
     {
         $this->expectException(FailedToLoadConfigurationFileException::class);
-        $this->expectExceptionMessageMatches('#Failed to load config file: .*invalid/throws.php#iu');
+        $this->expectExceptionMessageMatches('#Failed to load config file: .*invalid'.\DIRECTORY_SEPARATOR.'throws.php#iu');
 
         Configuration::new()->mergeFile(self::fixtureDirectory('invalid', 'throws.php'));
     }
