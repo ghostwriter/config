@@ -83,6 +83,10 @@
             "container": {
                 "definition": "Ghostwriter\\Config\\Container\\ConfigurationDefinition"
             }
+        },
+        "thanks": {
+            "url": "https://github.com/ghostwriter/config",
+            "name": "ghostwriter/config"
         }
     },
     "scripts": {
