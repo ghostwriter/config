@@ -85,8 +85,8 @@
             }
         },
         "thanks": {
-            "url": "https://github.com/ghostwriter/config",
-            "name": "ghostwriter/config"
+            "name": "ghostwriter/config",
+            "url": "https://github.com/ghostwriter/config"
         }
     },
     "scripts": {
