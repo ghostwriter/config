@@ -21,5 +21,6 @@ final readonly class ConfigurationDefinition implements DefinitionInterface
     public function __invoke(ContainerInterface $container): void
     {
         $container->alias(Configuration::class, ConfigurationInterface::class);
+        $container->extend(ConfigurationInterface::class, ConfigurationExtension::class);
     }
 }
