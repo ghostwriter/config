@@ -7,10 +7,10 @@
     "state": "open"
   - "title": "2.0.2"
     "description": "Patch release – targeting 2.0.x branch (semantic version: 2.0.2)"
-    "state": "open"
-  - "title": "2.0.1"
-    "description": "Patch release – targeting 2.0.x branch (semantic version: 2.0.1)"
     "state": "closed"
+  - "title": "2.0.3"
+    "description": "Patch release – targeting 2.0.x branch (semantic version: 2.0.3)"
+    "state": "open"
 "repository":
   "name": "config"
   "description": "Provides an object that maps configuration keys to values."
