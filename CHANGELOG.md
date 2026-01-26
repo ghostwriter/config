@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 2.0.0 - 2025-11-01
+
+### Added
+
+ - Class `Ghostwriter\Config\Configuration` has been added.
+ - Class `Ghostwriter\Config\Exception\ConfigurationDirectoryNotFoundException` has been added.
+ - Class `Ghostwriter\Config\Exception\ConfigurationDirectoryNotReadableException` has been added.
+ - Class `Ghostwriter\Config\Exception\ConfigurationFileNotFoundException` has been added.
+ - Class `Ghostwriter\Config\Exception\ConfigurationFileNotReadableException` has been added.
+ - Class `Ghostwriter\Config\Exception\ConfigurationFilePathResolutionException` has been added.
+ - Class `Ghostwriter\Config\Exception\ConfigurationKeyMustBeNonEmptyStringException` has been added.
+ - Class `Ghostwriter\Config\Exception\ConfigurationKeyMustBeStringException` has been added.
+ - Class `Ghostwriter\Config\Exception\FailedToLoadConfigurationFileException` has been added.
+ - Class `Ghostwriter\Config\Exception\FailedToLoadConfigurationFileWithErrorsException` has been added.
+ - Class `Ghostwriter\Config\Exception\InvalidConfigurationFileException` has been added.
+ - Class `Ghostwriter\Config\Exception\InvalidConfigurationKeyException` has been added.
+ - Class `Ghostwriter\Config\Exception\InvalidConfigurationValueException` has been added.
+ - Class `Ghostwriter\Config\Exception\InvalidDotNotationConfigurationKeyException` has been added.
+ - Interface `Ghostwriter\Config\Interface\ConfigurationExceptionInterface` has been added.
+ - Interface `Ghostwriter\Config\Interface\ConfigurationInterface` has been added.
+
+
+### Removed
+
+- Class `Ghostwriter\Config\Config` has been deleted.
+- Class `Ghostwriter\Config\ConfigFactory` has been deleted.
+- Class `Ghostwriter\Config\Exception\ConfigDirectoryNotFoundException` has been deleted.
+- Class `Ghostwriter\Config\Exception\ConfigFileNotFoundException` has been deleted.
+- Class `Ghostwriter\Config\Exception\EmptyConfigKeyException` has been deleted.
+- Class `Ghostwriter\Config\Exception\ExceptionInterface` has been deleted.
+- Class `Ghostwriter\Config\Exception\InvalidConfigFileException` has been deleted.
+- Class `Ghostwriter\Config\Exception\InvalidConfigKeyException` has been deleted.
+- Class `Ghostwriter\Config\Exception\ShouldNotHappenException` has been deleted.
+- Interface `Ghostwriter\Config\ConfigFactoryInterface` has been deleted.
+- Interface `Ghostwriter\Config\ConfigInterface` has been deleted.
+- Interface `Ghostwriter\Config\ConfigProviderInterface` has been deleted.
+
 ## 1.0.0 - 2025-01-07
 
 ### Added
