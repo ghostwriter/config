@@ -5,27 +5,27 @@ declare(strict_types=1);
 namespace Tests\Unit\Container;
 
 use Ghostwriter\Config\Configuration;
-use Ghostwriter\Config\Container\ConfigurationDefinition;
 use Ghostwriter\Config\Container\ConfigurationExtension;
+use Ghostwriter\Config\Container\ConfigurationProvider;
 use Ghostwriter\Config\Interface\ConfigurationInterface;
 use Ghostwriter\Container\Interface\ContainerInterface;
-use Ghostwriter\Container\Interface\Service\DefinitionInterface;
+use Ghostwriter\Container\Interface\Service\ProviderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\Unit\AbstractTestCase;
 
 use function is_a;
 
-#[CoversClass(ConfigurationDefinition::class)]
-final class ConfigurationDefinitionTest extends AbstractTestCase
+#[CoversClass(ConfigurationProvider::class)]
+final class ConfigurationProviderTest extends AbstractTestCase
 {
-    public function testDefinition(): void
+    public function testConfigurationProviderRegister(): void
     {
         $container = $this->createMock(ContainerInterface::class);
 
         $container
             ->expects(self::once())
             ->method('alias')
-            ->with(Configuration::class, ConfigurationInterface::class);
+            ->with(ConfigurationInterface::class, Configuration::class);
 
         $container
             ->expects(self::once())
@@ -33,11 +33,11 @@ final class ConfigurationDefinitionTest extends AbstractTestCase
             ->with(ConfigurationInterface::class, ConfigurationExtension::class)
             ->seal();
 
-        (new ConfigurationDefinition())($container);
+        (new ConfigurationProvider())->register($container);
     }
 
-    public function testInstanceOfDefinitionInterface(): void
+    public function testInstanceOfProviderInterface(): void
     {
-        self::assertTrue(is_a(ConfigurationDefinition::class, DefinitionInterface::class, true));
+        self::assertTrue(is_a(ConfigurationProvider::class, ProviderInterface::class, true));
     }
 }

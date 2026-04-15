@@ -35,9 +35,9 @@
     "require-dev": {
         "ext-xdebug": "*",
         "ghostwriter/coding-standard": "dev-main",
-        "ghostwriter/container": "^6.1.0",
+        "ghostwriter/container": "^6.1.1",
         "mockery/mockery": "^1.6.12",
-        "phpunit/phpunit": "^13.1.3",
+        "phpunit/phpunit": "^13.1.4",
         "symfony/var-dumper": "^8.0.8"
     },
     "prefer-stable": true,
@@ -76,7 +76,7 @@
     "extra": {
         "ghostwriter": {
             "container": {
-                "definition": "Ghostwriter\\Config\\Container\\ConfigurationDefinition"
+                "provider": ["Ghostwriter\\Config\\Container\\ConfigurationProvider"]
             }
         },
         "thanks": {
