@@ -55,17 +55,17 @@ final readonly class ConfigurationExtension implements ExtensionInterface
         $containerConfiguration = $service->wrap('ghostwriter.container');
 
         foreach ($containerConfiguration->get('alias', []) as $alias => $service) {
-            if (! class_exists($alias) || ! interface_exists($alias)) {
+            if (! class_exists($alias) && ! interface_exists($alias)) {
                 continue;
             }
-            if (! class_exists($service) || ! interface_exists($service)) {
+            if (! class_exists($service) && ! interface_exists($service)) {
                 continue;
             }
             $container->alias($alias, $service);
         }
 
         foreach ($containerConfiguration->get('extend', []) as $service => $extensions) {
-            if (! class_exists($service) || ! interface_exists($service)) {
+            if (! class_exists($service) && ! interface_exists($service)) {
                 continue;
             }
             foreach ($extensions as $extension) {
@@ -76,7 +76,7 @@ final readonly class ConfigurationExtension implements ExtensionInterface
             }
         }
         foreach ($containerConfiguration->get('factory', []) as $service => $factory) {
-            if (! class_exists($service) || ! interface_exists($service)) {
+            if (! class_exists($service) && ! interface_exists($service)) {
                 continue;
             }
             if (! is_a($factory, FactoryInterface::class, true)) {

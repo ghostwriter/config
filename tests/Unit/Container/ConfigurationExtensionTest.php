@@ -110,10 +110,10 @@ final class ConfigurationExtensionTest extends AbstractTestCase
 
             (new ConfigurationExtension())($this->createMockContainer(), $configuration);
 
-            self::assertSame('Ghostwriter', $configuration->get('app.name'));
-            self::assertSame('test', $configuration->get('app.env'));
-            self::assertSame('pgsql', $configuration->get('database.pgsql.driver'));
-            self::assertSame(5432, $configuration->get('database.pgsql.port'));
+            self::assertSame('Ghostwriter', $configuration->get('ghostwriter.app.name'));
+            self::assertSame('test', $configuration->get('ghostwriter.app.env'));
+            self::assertSame('pgsql', $configuration->get('ghostwriter.database.pgsql.driver'));
+            self::assertSame(5432, $configuration->get('ghostwriter.database.pgsql.port'));
         } finally {
             chdir($currentWorkingDirectory);
             @unlink($databaseFile);
