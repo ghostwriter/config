@@ -143,7 +143,14 @@ abstract class AbstractConfiguration implements ConfigurationInterface
 
         self::ensureDirectoryIsReadable($realDirectory);
 
-        $fileList = iterator_to_array(self::buildPhpFileIterator($realDirectory));
+        try {
+            $fileList = iterator_to_array(self::buildPhpFileIterator($realDirectory));
+        } catch (Throwable $throwable) {
+            throw new ConfigurationDirectoryNotReadableException(sprintf(
+                'Failed to read config directory "%s".',
+                $realDirectory
+            ), previous: $throwable);
+        }
 
         array_walk($fileList, function (SplFileInfo $phpFile) use ($directory, $realDirectory): void {
             $path = self::getFileRealPathOrThrow($phpFile, $directory);

@@ -15,6 +15,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversClassesThatExtendClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
+use Tests\Fixture\Autoload\ConfiguredAliasInterface;
+use Tests\Fixture\Autoload\ConfiguredExtension;
+use Tests\Fixture\Autoload\ConfiguredFactory;
+use Tests\Fixture\Autoload\ConfiguredFactoryService;
+use Tests\Fixture\Autoload\ConfiguredService;
 use Tests\Unit\AbstractTestCase;
 use Throwable;
 
@@ -30,6 +35,7 @@ use function rmdir;
 use function sys_get_temp_dir;
 use function uniqid;
 use function unlink;
+use function var_export;
 
 #[CoversClass(ConfigurationExtension::class)]
 #[CoversClassesThatExtendClass(AbstractConfiguration::class)]
@@ -110,10 +116,10 @@ final class ConfigurationExtensionTest extends AbstractTestCase
 
             (new ConfigurationExtension())($this->createMockContainer(), $configuration);
 
-            self::assertSame('Ghostwriter', $configuration->get('app.name'));
-            self::assertSame('test', $configuration->get('app.env'));
-            self::assertSame('pgsql', $configuration->get('database.pgsql.driver'));
-            self::assertSame(5432, $configuration->get('database.pgsql.port'));
+            self::assertSame('Ghostwriter', $configuration->get('ghostwriter.app.name'));
+            self::assertSame('test', $configuration->get('ghostwriter.app.env'));
+            self::assertSame('pgsql', $configuration->get('ghostwriter.database.pgsql.driver'));
+            self::assertSame(5432, $configuration->get('ghostwriter.database.pgsql.port'));
         } finally {
             chdir($currentWorkingDirectory);
             @unlink($databaseFile);
@@ -151,6 +157,82 @@ final class ConfigurationExtensionTest extends AbstractTestCase
         } finally {
             chdir($currentWorkingDirectory);
             chmod($ghostwriter, 0o755);
+            @rmdir($ghostwriter);
+            @rmdir($root . DIRECTORY_SEPARATOR . 'config');
+            @rmdir($root);
+        }
+    }
+
+    /** @throws Throwable */
+    public function testInvokeRegistersContainerConfigurationFromGhostwriterDirectory(): void
+    {
+        $currentWorkingDirectory = getcwd();
+
+        self::assertNotFalse($currentWorkingDirectory);
+
+        $root = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'gw_cfg_ext_container_' . uniqid();
+        $ghostwriter = $root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ghostwriter';
+        $containerFile = $ghostwriter . DIRECTORY_SEPARATOR . 'container.php';
+
+        mkdir($ghostwriter, 0o777, true);
+
+        file_put_contents($containerFile, "<?php\nreturn " . var_export([
+            'alias' => [
+                ConfiguredAliasInterface::class => ConfiguredService::class,
+            ],
+            'extend' => [
+                ConfiguredService::class => [ConfiguredExtension::class],
+            ],
+            'factory' => [
+                ConfiguredFactoryService::class => ConfiguredFactory::class,
+            ],
+        ], true) . ";\n");
+
+        $container = $this->createMock(ContainerInterface::class);
+
+        $container
+            ->expects(self::once())
+            ->method('alias')
+            ->with(ConfiguredAliasInterface::class, ConfiguredService::class)
+        ;
+
+        $container
+            ->expects(self::once())
+            ->method('extend')
+            ->with(ConfiguredService::class, ConfiguredExtension::class);
+
+        $container
+            ->expects(self::once())
+            ->method('factory')
+            ->with(ConfiguredFactoryService::class, ConfiguredFactory::class);
+
+        $container
+            ->expects(self::never())
+            ->method('get')
+            ->seal();
+
+        $configuration = Configuration::new();
+
+        try {
+            chdir($root);
+
+            (new ConfigurationExtension())($container, $configuration);
+
+            self::assertSame(
+                ConfiguredService::class,
+                $configuration->wrap('ghostwriter.container.alias')->get(ConfiguredAliasInterface::class)
+            );
+            self::assertSame(
+                [ConfiguredExtension::class],
+                $configuration->wrap('ghostwriter.container.extend')->get(ConfiguredService::class)
+            );
+            self::assertSame(
+                ConfiguredFactory::class,
+                $configuration->wrap('ghostwriter.container.factory')->get(ConfiguredFactoryService::class)
+            );
+        } finally {
+            chdir($currentWorkingDirectory);
+            @unlink($containerFile);
             @rmdir($ghostwriter);
             @rmdir($root . DIRECTORY_SEPARATOR . 'config');
             @rmdir($root);
