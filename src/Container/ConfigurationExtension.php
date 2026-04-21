@@ -52,6 +52,7 @@ final readonly class ConfigurationExtension implements ExtensionInterface
 
         $service->mergeDirectory(dirname($configDirectory));
 
+        return;
         $containerConfiguration = $service->wrap('ghostwriter.container');
 
         foreach ($containerConfiguration->get('alias', []) as $alias => $service) {
