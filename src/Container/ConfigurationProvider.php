@@ -21,6 +21,5 @@ final class ConfigurationProvider extends AbstractProvider
     public function register(BuilderInterface $builder): void
     {
         $builder->alias(ConfigurationInterface::class, Configuration::class);
-        $builder->extend(ConfigurationInterface::class, ConfigurationExtension::class);
     }
 }
