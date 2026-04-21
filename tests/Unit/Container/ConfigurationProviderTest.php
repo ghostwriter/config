@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Container;
 
 use Ghostwriter\Config\Configuration;
-use Ghostwriter\Config\Container\ConfigurationExtension;
 use Ghostwriter\Config\Container\ConfigurationProvider;
 use Ghostwriter\Config\Interface\ConfigurationInterface;
 use Ghostwriter\Container\Interface\ContainerInterface;
@@ -25,12 +24,7 @@ final class ConfigurationProviderTest extends AbstractTestCase
         $container
             ->expects(self::once())
             ->method('alias')
-            ->with(ConfigurationInterface::class, Configuration::class);
-
-        $container
-            ->expects(self::once())
-            ->method('extend')
-            ->with(ConfigurationInterface::class, ConfigurationExtension::class)
+            ->with(ConfigurationInterface::class, Configuration::class)
             ->seal();
 
         (new ConfigurationProvider())->register($container);
