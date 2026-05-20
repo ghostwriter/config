@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "131e9043dd2319da2b86e10bca33df73",
+    "content-hash": "f8b0e69fafd78176da127aac274076cb",
     "packages": [],
     "packages-dev": [
         {
             "name": "boundwize/structarmed",
-            "version": "0.6.13",
+            "version": "0.6.14",
             "source": {
                 "type": "git",
                 "url": "https://github.com/boundwize/structarmed.git",
-                "reference": "7a6e3a9e4b8e7ae6cb344c5933240a8d71dd62bc"
+                "reference": "74a38efeae3c995586dd16bf5935f98d249ee20d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/boundwize/structarmed/zipball/7a6e3a9e4b8e7ae6cb344c5933240a8d71dd62bc",
-                "reference": "7a6e3a9e4b8e7ae6cb344c5933240a8d71dd62bc",
+                "url": "https://api.github.com/repos/boundwize/structarmed/zipball/74a38efeae3c995586dd16bf5935f98d249ee20d",
+                "reference": "74a38efeae3c995586dd16bf5935f98d249ee20d",
                 "shasum": ""
             },
             "require": {
@@ -67,7 +67,7 @@
             ],
             "support": {
                 "issues": "https://github.com/boundwize/structarmed/issues",
-                "source": "https://github.com/boundwize/structarmed/tree/0.6.13"
+                "source": "https://github.com/boundwize/structarmed/tree/0.6.14"
             },
             "funding": [
                 {
@@ -75,7 +75,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-05-19T15:51:33+00:00"
+            "time": "2026-05-20T03:09:43+00:00"
         },
         {
             "name": "fidry/cpu-core-counter",
@@ -144,16 +144,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ghostwriter/coding-standard.git",
-                "reference": "ea245ee01741df44a895c6c8ce4a6f13fcbbcdd7"
+                "reference": "199dbc52ae11f96ef72ae876af1393a0db6b2e55"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ghostwriter/coding-standard/zipball/ea245ee01741df44a895c6c8ce4a6f13fcbbcdd7",
-                "reference": "ea245ee01741df44a895c6c8ce4a6f13fcbbcdd7",
+                "url": "https://api.github.com/repos/ghostwriter/coding-standard/zipball/199dbc52ae11f96ef72ae876af1393a0db6b2e55",
+                "reference": "199dbc52ae11f96ef72ae876af1393a0db6b2e55",
                 "shasum": ""
             },
             "require": {
-                "boundwize/structarmed": "^0.6.13",
+                "boundwize/structarmed": "^0.6.14",
                 "ext-apcu": "*",
                 "ext-bcmath": "*",
                 "ext-ctype": "*",
@@ -264,7 +264,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-05-20T00:14:28+00:00"
+            "time": "2026-05-20T04:26:00+00:00"
         },
         {
             "name": "ghostwriter/container",
