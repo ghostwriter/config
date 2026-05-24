@@ -50,10 +50,6 @@
 "repository":
   "name": "config"
   "description": "Provides an object that maps configuration keys to values."
-  "topics":
-    - "ghostwriter"
-    - "config"
-    - "php"
   "homepage": "https://github.com/ghostwriter/config"
   "default_branch": "2.1.x"
   "allow_auto_merge": true
