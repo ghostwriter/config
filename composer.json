@@ -26,6 +26,10 @@
         {
             "type": "github",
             "url": "https://github.com/sponsors/ghostwriter"
+        },
+        {
+            "type": "paypal",
+            "url": "https://paypal.me/codepoet"
         }
     ],
     "_comment": [
@@ -40,7 +44,7 @@
     },
     "require-dev": {
         "ext-xdebug": "*",
-        "boundwize/structarmed": "^0.9.3",
+        "boundwize/structarmed": "^0.9.4",
         "ghostwriter/coding-standard": "dev-main",
         "ghostwriter/container": "^7.0.2",
         "ghostwriter/phpunit-assertions": "^0.1.0",
