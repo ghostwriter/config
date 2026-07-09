@@ -58,6 +58,8 @@ use function str_replace;
 
 /**
  * @template T of (array<non-empty-string,T>|bool|float|int|null|string)
+ *
+ * @implements ConfigurationInterface<T>
  */
 abstract class AbstractConfiguration implements ConfigurationInterface
 {
