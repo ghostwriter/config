@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1b14d124063bcf401e592481891b646e",
+    "content-hash": "ddf8cb27e83139d2bd0c9b09bde1c259",
     "packages": [],
     "packages-dev": [
         {
@@ -330,87 +330,6 @@
                 }
             ],
             "time": "2026-07-07T04:07:55+00:00"
-        },
-        {
-            "name": "ghostwriter/container",
-            "version": "7.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/ghostwriter/container.git",
-                "reference": "a5474864d2a54074fef019646bf7ca060eb3638b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/ghostwriter/container/zipball/a5474864d2a54074fef019646bf7ca060eb3638b",
-                "reference": "a5474864d2a54074fef019646bf7ca060eb3638b",
-                "shasum": ""
-            },
-            "require": {
-                "php": "~8.4.0 || ~8.5.0",
-                "psr/container": "^2.0.2"
-            },
-            "provide": {
-                "psr/container-implementation": "*"
-            },
-            "require-dev": {
-                "boundwize/structarmed": "^0.7.12",
-                "ext-xdebug": "*",
-                "ghostwriter/coding-standard": "dev-main",
-                "ghostwriter/testify": "^0.1.1",
-                "mockery/mockery": "^1.6.12",
-                "phpunit/phpunit": "^13.1.12",
-                "symfony/var-dumper": "^8.0.8"
-            },
-            "type": "library",
-            "extra": {
-                "thanks": {
-                    "url": "https://github.com/ghostwriter/container",
-                    "name": "ghostwriter/container"
-                },
-                "ghostwriter": {
-                    "container": {
-                        "provider": [
-                            "Ghostwriter\\Container\\Service\\Provider\\ContainerProvider"
-                        ]
-                    }
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Ghostwriter\\Container\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Nathanael Esayeas",
-                    "email": "nathanael.esayeas@protonmail.com",
-                    "homepage": "https://github.com/ghostwriter",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Provides an extensible Dependency Injection Service Container for Automated Object Composition, Interception, and Lifetime Management.",
-            "homepage": "https://github.com/ghostwriter/container",
-            "keywords": [
-                "container",
-                "ghostwriter"
-            ],
-            "support": {
-                "issues": "https://github.com/ghostwriter/container/issues",
-                "rss": "https://github.com/ghostwriter/container/releases.atom",
-                "security": "https://github.com/ghostwriter/container/security/advisories/new",
-                "source": "https://github.com/ghostwriter/container"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/sponsors/ghostwriter",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-05-27T01:57:36+00:00"
         },
         {
             "name": "ghostwriter/phpunit-assertions",
@@ -1330,59 +1249,6 @@
                 }
             ],
             "time": "2026-07-08T08:36:51+00:00"
-        },
-        {
-            "name": "psr/container",
-            "version": "2.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/php-fig/container.git",
-                "reference": "c71ecc56dfe541dbd90c5360474fbc405f8d5963"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/container/zipball/c71ecc56dfe541dbd90c5360474fbc405f8d5963",
-                "reference": "c71ecc56dfe541dbd90c5360474fbc405f8d5963",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.4.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Psr\\Container\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "PHP-FIG",
-                    "homepage": "https://www.php-fig.org/"
-                }
-            ],
-            "description": "Common Container Interface (PHP FIG PSR-11)",
-            "homepage": "https://github.com/php-fig/container",
-            "keywords": [
-                "PSR-11",
-                "container",
-                "container-interface",
-                "container-interop",
-                "psr"
-            ],
-            "support": {
-                "issues": "https://github.com/php-fig/container/issues",
-                "source": "https://github.com/php-fig/container/tree/2.0.2"
-            },
-            "time": "2021-11-05T16:47:00+00:00"
         },
         {
             "name": "sebastian/cli-parser",
